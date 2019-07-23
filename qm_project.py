@@ -4,20 +4,6 @@ def atom(ao_index):
     '''Returns the atom index part of an atomic orbital index.'''
     return ao_index // orbitals_per_atom
 
-def orb(ao_index):
-    '''
-    Returns the atom index part of an atomic orbital index.
-
-    Parameters
-    ----------
-    ao_index : int
-
-    Returns
-    -------
-    ao_index // orbitals_per_atom : int
-        Atom index part of an atomic orbital index.
-    '''
-    return ao_index // orbitals_per_atom
 
 def orb(ao_index):
     '''Returns the orbital type of an atomic orbital index.
