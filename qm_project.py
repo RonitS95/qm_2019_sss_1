@@ -1,7 +1,17 @@
 import numpy as np
 
 def atom(ao_index):
-    '''Returns the atom index part of an atomic orbital index.'''
+    '''Returns the atom index part of an atomic orbital index.
+    
+    Parameters
+    ----------
+    ao_index : int
+    
+    Returns
+    -------
+    ao_index//orbitals_per_atom : int
+    
+    '''
     return ao_index // orbitals_per_atom
 
 
