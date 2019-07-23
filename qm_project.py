@@ -48,7 +48,28 @@ def coulomb_energy(o1, o2, r12):
     return ans
 
 def pseudopotential_energy(o, r, model_parameters):
-    '''Returns the energy of a pseudopotential between a multipole of type o and an atom separated by a vector r.'''
+    '''Returns the energy of a pseudopotential between a multipole of type o and an atom separated by a vector r.
+    
+    This function takes in the pseudopotential parameters defined in the 
+    parameter dictionary and calculates the correction based on the 
+    orbital types which it takes as input. 
+
+    Parameters:
+    ---------- 
+    o: str
+        A string indicating which orbital correction is being calculated
+    r: np.array
+        The coordinates of the orbital mentioned above
+    model_parameters: dict
+        The dictionary containing all the fitting parameters of the 
+        system.
+
+    Returns:
+    ------- 
+    ans: float
+        The correction term for the given orbital.
+    
+    '''
     ans = model_parameters['v_pseudo']
     r_rescaled = r / model_parameters['r_pseudo']
     ans *= np.exp(1.0 - np.dot(r_rescaled, r_rescaled))
@@ -58,7 +79,21 @@ def pseudopotential_energy(o, r, model_parameters):
 
 
 def calculate_energy_ion(atomic_coordinates):
-    '''Returns the ionic contribution to the total energy for an input list of atomic coordinates.'''
+    '''Returns the ionic contribution to the total energy for an input list of atomic coordinates.
+    
+    The function calculates the ionic repulsion energy for the two ionic
+    part of the Hamiltonian, E_ion, considering them as point charges.
+
+    Parameters:
+    ---------- 
+    atomic_coordinates: np.array
+        The array has the coordinates of the atoms of the Ar atoms
+
+    Returns:
+    ------- 
+    energy_ion: float
+        The total repulsion energy of the atoms in the model 
+    '''
     energy_ion = 0.0
     for i, r_i in enumerate(atomic_coordinates):
         for j, r_j in enumerate(atomic_coordinates):
@@ -68,7 +103,22 @@ def calculate_energy_ion(atomic_coordinates):
     return energy_ion
 
 def calculate_potential_vector(atomic_coordinates, model_parameters):
-    '''Returns the electron-ion potential energy vector for an input list of atomic coordinates.'''
+    '''Returns the electron-ion potential energy vector for an input list of atomic coordinates.
+    
+    Parameters:
+    ---------- 
+    atomic_coordinates: np.array
+        Contains the coordinates of the Ar atoms in the system.
+    model_parameters: dictionary
+        Contains the fitting parameters for the system
+
+    Returns:
+    ------- 
+    potential_vector: np.array
+        Contains the electron-ion potential energies ommitting the self
+        interaction energies.
+    
+    '''
     ndof = len(atomic_coordinates) * orbitals_per_atom
     potential_vector = np.zeros(ndof)
     for p in range(ndof):
@@ -82,7 +132,29 @@ def calculate_potential_vector(atomic_coordinates, model_parameters):
     return potential_vector
 
 def calculate_interaction_matrix(atomic_coordinates, model_parameters):
-    '''Returns the electron-electron interaction energy matrix for an input list of atomic coordinates.'''
+    '''Returns the electron-electron interaction energy matrix for an input list of atomic coordinates.
+    
+    This function divides the electron electron repulsion into two parts,
+    if the electrons are on different atoms and if the electrons are on
+    the same atom. For the former case, their interaction is purely 
+    coulombic, and for the latter, the repulsion terms are taken from 
+    the model parameters.
+
+    Parameters:
+    ---------- 
+    atomic_coordinates: np.array
+        An array containing the list of coordinates of Ar atoms in our 
+        system.
+    model_parameters: Dictionary
+        Containing the fitting parameters for the Ar system.
+
+    Returns:
+    ------- 
+    interaction_matrix: np.array
+        This matrix contains the electron electron interactions in the
+        basis considered.
+    
+    '''
     ndof = len(atomic_coordinates)*orbitals_per_atom
     interaction_matrix = np.zeros( (ndof,ndof) )
     for p in range(ndof):
@@ -97,7 +169,21 @@ def calculate_interaction_matrix(atomic_coordinates, model_parameters):
     return interaction_matrix
 
 def chi_on_atom(o1, o2, o3, model_parameters):
-    '''Returns the value of the chi tensor for 3 orbital indices on the same atom.'''
+    '''Returns the value of the chi tensor for 3 orbital indices on the same atom.
+    
+    Parameters:
+    ---------- 
+    o1, o2, o3: str
+        Orbital types 
+    model_parameters: Dictionary
+        Contains the fitting parameters for the Ar system.
+
+    Returns:
+    ------- 
+
+        float
+            The integer means chi tensor for the orbital indices. 
+    '''
     if o1 == o2 and o3 == 's':
         return 1.0
     if o1 == o3 and o3 in p_orbitals and o2 == 's':
