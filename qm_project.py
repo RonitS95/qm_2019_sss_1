@@ -115,7 +115,28 @@ def coulomb_energy(o1, o2, r12):
     return ans
 
 def pseudopotential_energy(o, r, model_parameters):
-    '''Returns the energy of a pseudopotential between a multipole of type o and an atom separated by a vector r.'''
+    '''Returns the energy of a pseudopotential between a multipole of type o and an atom separated by a vector r.
+    
+    This function takes in the pseudopotential parameters defined in the 
+    parameter dictionary and calculates the correction based on the 
+    orbital types which it takes as input. 
+
+    Parameters:
+    ---------- 
+    o: str
+        A string indicating which orbital correction is being calculated
+    r: np.array
+        The coordinates of the orbital mentioned above
+    model_parameters: dict
+        The dictionary containing all the fitting parameters of the 
+        system.
+
+    Returns:
+    ------- 
+    ans: float
+        The correction term for the given orbital.
+    
+    '''
     ans = model_parameters['v_pseudo']
     r_rescaled = r / model_parameters['r_pseudo']
     ans *= np.exp(1.0 - np.dot(r_rescaled, r_rescaled))
@@ -125,7 +146,21 @@ def pseudopotential_energy(o, r, model_parameters):
 
 
 def calculate_energy_ion(atomic_coordinates):
-    '''Returns the ionic contribution to the total energy for an input list of atomic coordinates.'''
+    '''Returns the ionic contribution to the total energy for an input list of atomic coordinates.
+    
+    The function calculates the ionic repulsion energy for the two ionic
+    part of the Hamiltonian, E_ion, considering them as point charges.
+
+    Parameters:
+    ---------- 
+    atomic_coordinates: np.array
+        The array has the coordinates of the atoms of the Ar atoms
+
+    Returns:
+    ------- 
+    energy_ion: float
+        The total repulsion energy of the atoms in the model 
+    '''
     energy_ion = 0.0
     for i, r_i in enumerate(atomic_coordinates):
         for j, r_j in enumerate(atomic_coordinates):
@@ -135,7 +170,22 @@ def calculate_energy_ion(atomic_coordinates):
     return energy_ion
 
 def calculate_potential_vector(atomic_coordinates, model_parameters):
-    '''Returns the electron-ion potential energy vector for an input list of atomic coordinates.'''
+    '''Returns the electron-ion potential energy vector for an input list of atomic coordinates.
+    
+    Parameters:
+    ---------- 
+    atomic_coordinates: np.array
+        Contains the coordinates of the Ar atoms in the system.
+    model_parameters: dictionary
+        Contains the fitting parameters for the system
+
+    Returns:
+    ------- 
+    potential_vector: np.array
+        Contains the electron-ion potential energies ommitting the self
+        interaction energies.
+    
+    '''
     ndof = len(atomic_coordinates) * orbitals_per_atom
     potential_vector = np.zeros(ndof)
     for p in range(ndof):
@@ -149,7 +199,29 @@ def calculate_potential_vector(atomic_coordinates, model_parameters):
     return potential_vector
 
 def calculate_interaction_matrix(atomic_coordinates, model_parameters):
-    '''Returns the electron-electron interaction energy matrix for an input list of atomic coordinates.'''
+    '''Returns the electron-electron interaction energy matrix for an input list of atomic coordinates.
+    
+    This function divides the electron electron repulsion into two parts,
+    if the electrons are on different atoms and if the electrons are on
+    the same atom. For the former case, their interaction is purely 
+    coulombic, and for the latter, the repulsion terms are taken from 
+    the model parameters.
+
+    Parameters:
+    ---------- 
+    atomic_coordinates: np.array
+        An array containing the list of coordinates of Ar atoms in our 
+        system.
+    model_parameters: Dictionary
+        Containing the fitting parameters for the Ar system.
+
+    Returns:
+    ------- 
+    interaction_matrix: np.array
+        This matrix contains the electron electron interactions in the
+        basis considered.
+    
+    '''
     ndof = len(atomic_coordinates)*orbitals_per_atom
     interaction_matrix = np.zeros( (ndof,ndof) )
     for p in range(ndof):
@@ -164,7 +236,21 @@ def calculate_interaction_matrix(atomic_coordinates, model_parameters):
     return interaction_matrix
 
 def chi_on_atom(o1, o2, o3, model_parameters):
-    '''Returns the value of the chi tensor for 3 orbital indices on the same atom.'''
+    '''Returns the value of the chi tensor for 3 orbital indices on the same atom.
+    
+    Parameters:
+    ---------- 
+    o1, o2, o3: str
+        Orbital types 
+    model_parameters: Dictionary
+        Contains the fitting parameters for the Ar system.
+
+    Returns:
+    ------- 
+
+        float
+            The integer means chi tensor for the orbital indices. 
+    '''
     if o1 == o2 and o3 == 's':
         return 1.0
     if o1 == o3 and o3 in p_orbitals and o2 == 's':
@@ -174,7 +260,30 @@ def chi_on_atom(o1, o2, o3, model_parameters):
     return 0.0
 
 def calculate_chi_tensor(atomic_coordinates, model_parameters):
-    '''Returns the chi tensor for an input list of atomic coordinates'''
+    '''Returns the chi tensor for an input list of atomic coordinates
+    
+    A 3-index tensor which calls atomic orbital indexes and multipole (dipole, quadrupole, etc..). 
+    Neglecting dipole diatomic differential overlap Focuses on intra-atomic s-p transition 
+    and uses a model parameter to define dipole strength. 3 transformation rules: s+_ + s+ = s+, 
+    p + p pi bonding overlap = s+, s + p non-bonding orbital = dipole strength parameter * p-orbital,
+    and p + p anti/non-bonding orbital = 0. Defined mathematically below
+
+    Parameters
+    ----------
+    coordinates : 
+    np.zeros
+    atomic_coordinates
+    orbitals_per_atom
+    ndof
+
+    Returns
+    -------
+    chi_tensor : (p, q, and r are atomic orbital indices)
+        1, p-orbital = q-orb + p-orb = s-orbital & p-ao = q-ao = r-ao
+        D, q-orb = r-orb & p-orb = s-orb & p-ao = q-ao = r-ao
+        D, p-orb = r-orb & q-orb = s-orb & p-ao = q-ao = r-ao
+        0, otherwise
+    '''
     ndof = len(atomic_coordinates) * orbitals_per_atom
     chi_tensor = np.zeros((ndof, ndof, ndof))
     for p in range(ndof):
@@ -185,21 +294,35 @@ def calculate_chi_tensor(atomic_coordinates, model_parameters):
                 chi_tensor[p, q, r] = chi_on_atom(orb(p), orb(q), orb(r),
                                                   model_parameters)
     return chi_tensor
+ 
+
 
 def calculate_hamiltonian_matrix(atomic_coordinates, model_parameters):
-    '''Returns the 1-body Hamiltonian matrix for an input list of atomic coordinates.
+    '''Returns the 1-body Hamiltonian matrix for an input list of atomic coordinates.'''
+
+    '''Assembles haliltonian matrix
+    
+    The 1-body Hamiltonian coefficients (h_p,_q) combine and implement the components of
+    the semi-empirical model with on-site orbital energies, E_s and E_p, the two last 
+    parameters of the semi-empirical model:
+    
+    h_p,_q = t_(orb(p), orb(q)) * (r_atom(p) - r_atom(q)), if p is not = q
+    or
+    h_p,_q = E_orb(p)*delta_(orb(p), orb(q)) + summation_r X_p,q,r * V^ion _r, where 
+    X = the chi tensor; if p = q
 
     Parameters
     ----------
-    atomic_coordinates : numpy.array
-        A 2D array of atomic coordinates.
-    model_parameters : dict
-        A dictionary of key semi-empirical QM parameters for the atom of interest.
+    energy_s: 
+    energy_p:
+    atomic_coordinates: float, len
+    model_parameters:
+    orbitals_per_atom:
 
     Returns
     -------
-    hamiltonian_matrix : numpy.array
-        A 2D array of 1-body Hamiltonian matrix elements.
+    hamiltonian matrix:
+    potential vector: 
     '''
     ndof = len(atomic_coordinates) * orbitals_per_atom
     hamiltonian_matrix = np.zeros((ndof, ndof))
@@ -533,4 +656,6 @@ if __name__ == "__main__":
     occupied_energy, virtual_energy, occupied_matrix, virtual_matrix = partition_orbitals(fock_matrix)
     interaction_tensor = transform_interaction_tensor(occupied_matrix, virtual_matrix, interaction_matrix, chi_tensor)
     energy_mp2 = calculate_energy_mp2(fock_matrix, interaction_matrix, chi_tensor)
+
     print(energy_mp2)
+
