@@ -2,15 +2,15 @@ import numpy as np
 
 def atom(ao_index):
     '''Returns the atom index part of an atomic orbital index.
-    
+
     Parameters
     ----------
     ao_index : int
-    
+
     Returns
     -------
     ao_index//orbitals_per_atom : int
-    
+
     '''
     return ao_index // orbitals_per_atom
 
@@ -34,7 +34,7 @@ def ao_index(atom_p, orb_p):
 
     '''
     Returns the atomic orbital index for a given atom index and orbital type.
-    
+
     Parameters
     ----------
     atom_p : str
@@ -55,7 +55,7 @@ def hopping_energy(o1, o2, r12, model_parameters):
 
     '''
     Returns the hopping matrix element for a pair of orbitals of type o1 & o2 separated by a vector r12.
-    
+
     Parameters
     ----------
     o1, o2 : str
@@ -88,7 +88,7 @@ def hopping_energy(o1, o2, r12, model_parameters):
 def coulomb_energy(o1, o2, r12):
     '''
     Returns the Coulomb matrix element for a pair of multipoles of type o1 & o2 separated by a vector r12.
-    
+
     Parameters
     ----------
     o1, o2 : str
@@ -283,7 +283,7 @@ def calculate_density_matrix(fock_matrix):
 
        Parameters
        ----------
-       fock_matrix : np.array 
+       fock_matrix : np.array
            The fock matrix is a numpy array of size (ndof,ndof)
 
        Returns
@@ -291,7 +291,7 @@ def calculate_density_matrix(fock_matrix):
        density_matrix : np.array
            The density matrix is a numpy array of size (ndof,ndof) that is the product of the
            occupied MOs with the transpose of the occupied MOs.
-           
+
     '''
     num_occ = (ionic_charge // 2) * np.size(fock_matrix,
                                             0) // orbitals_per_atom
@@ -316,13 +316,13 @@ def scf_cycle(hamiltonian_matrix, interaction_matrix, density_matrix,
        chi_tensor : np.array
            This is th chi tensor as a numpy array of size(ndof,ndof,ndof)
        max_scf_iteration : int,optional
-           This is the maximum number of iterations that the Cycle should take to try and converge. Default is 100 
+           This is the maximum number of iterations that the Cycle should take to try and converge. Default is 100
 
        Returns
        -------
        new_density_matrix: np.array
            This is returned either as the converged density or non-converged if max_iterations is passed,
-           it is a numpy array of size(ndof,ndof) 
+           it is a numpy array of size(ndof,ndof)
        new_fock_matrix: np.array
            This is either the converged fock matrix or non-converged if max_iterations is passed and the
            warning is printed. The output array is of size(ndof,ndof)
@@ -351,7 +351,7 @@ def calculate_energy_scf(hamiltonian_matrix, fock_matrix, density_matrix):
            This is the hamiltoian matrix calculated in calculate_hamiltonian_matrix, it is a numpy array of size(ndof,ndof)
        fock_matrix : np.array
            This is the fock matrix calculated in scf_cycle, it is a nupmy array of size (ndof,ndof)
-       density_marix : np.array           
+       density_marix : np.array
            This is the density matrix calculated in scf_cycle, it is a nupmy array of size (ndof,ndof)
 
        Returns
@@ -472,4 +472,3 @@ if __name__ == "__main__":
     interaction_tensor = transform_interaction_tensor(occupied_matrix, virtual_matrix, interaction_matrix, chi_tensor)
     energy_mp2 = calculate_energy_mp2(fock_matrix, interaction_matrix, chi_tensor)
     print(energy_mp2)
-
