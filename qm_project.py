@@ -656,10 +656,4 @@ if __name__ == "__main__":
     occupied_energy, virtual_energy, occupied_matrix, virtual_matrix = partition_orbitals(fock_matrix)
     interaction_tensor = transform_interaction_tensor(occupied_matrix, virtual_matrix, interaction_matrix, chi_tensor)
     energy_mp2 = calculate_energy_mp2(fock_matrix, interaction_matrix, chi_tensor)
-<<<<<<< HEAD
     print(energy_mp2)
-=======
-
-    print(energy_mp2)
-
->>>>>>> 96e212761e49e626741a3210de7e5ab74a9b3606
