@@ -93,7 +93,7 @@ def calculate_interaction_matrix(atomic_coordinates, model_parameters):
             if p == q and orb(p) == 's':
                 interaction_matrix[p,q] = model_parameters['coulomb_s']
             if p == q and orb(p) in p_orbitals:
-                interaction_matrix[p,q] = model_parameters['coulomb_p']                
+                interaction_matrix[p,q] = model_parameters['coulomb_p']
     return interaction_matrix
 
 def chi_on_atom(o1, o2, o3, model_parameters):
@@ -204,7 +204,28 @@ def calculate_energy_scf(hamiltonian_matrix, fock_matrix, density_matrix):
     return energy_scf
 
 def partition_orbitals(fock_matrix):
-    '''Returns a list with the occupied/virtual energies & orbitals defined by the input Fock matrix.'''
+    """Returns a list with the occupied/virtual energies & orbitals defined by the input Fock matrix.
+    Parameters
+    ----------
+    fock_matrix : numpy.ndarray
+        A (ndof,ndof) array populated with 'float' data types. The elements of this matrix are constructed by
+        numerically computing an expectation value for the fock operator operating on a state vector.
+        The transformed state is then projected onto an orbital basis.
+    Returns
+    -------
+    occupied_energy : numpy.ndarray
+        A [:numocc] long array containing the eigenvalues that correspond to the
+        eigenvectors of the occupied orbital space. The stored values are 'floats'.
+    virtual_energy : numpy.ndarray
+        A (numocc:) long array containing the eigenvalues that correspond to the
+        eigenvectors of the virtual orbital space. The stored values are 'floats'.
+    occupied_matrix : numpy.ndarray
+        A rank 2 array, [:, :num_occ], indexed by the number of basis functions/molecular
+        orbitals and the number of occupied orbitals. The stored values are 'floats'.
+    virtual_matrix : numpy.ndarray
+        A rank 2 array, [:, num_occ:], indexed by the number of virtual orbitals and by the
+        number of basis functions/molecular orbitals. The stored values are 'floats'.
+    """
     num_occ = (ionic_charge // 2) * np.size(fock_matrix,
                                             0) // orbitals_per_atom
     orbital_energy, orbital_matrix = np.linalg.eigh(fock_matrix)
@@ -217,7 +238,29 @@ def partition_orbitals(fock_matrix):
 
 def transform_interaction_tensor(occupied_matrix, virtual_matrix,
                                  interaction_matrix, chi_tensor):
-    '''Returns a transformed V tensor defined by the input occupied, virtual, & interaction matrices.'''
+    """Returns a transformed V tensor defined by the input occupied, virtual, & interaction matrices.
+    Parameters
+    ----------
+    occupied_matrix : numpy.ndarray
+        A rank 2 array, [:, :num_occ], indexed by the number of basis functions/orbitals
+        and the number of occupied orbitals. The stored values are 'floats'.
+    virtual_matrix : numpy.ndarray
+        A rank 2 array, [:, num_occ:], indexed by the number of virtual orbitals and by the
+        number of basis functions/orbitals. The stored values are 'floats'.
+    interaction_matrix : numpy.ndarray
+        A (ndof,ndof) array populated with 'float' data types. The elements of this matrix are
+        constructed by numerically computing an expectation value for the pairwise coulomic interactions
+        between electrons in orbitals {p} and {q}.
+    chi_tensor : numpy.ndarray
+        A rank 3 array, [ndof,ndof,ndof], indexed by {p} and {q} atomic orbitals and
+        r--the multipole moment index. The stored values are 'floats'.
+    Returns
+    -------
+    interaction_tensor : numpy.ndarray
+        A rank 4 interaction tensor represented by an einstein sum over {p} and {q} is contracted to
+        4 indices: aibj. These particle-hole or O-V indices define the basis featured in the second
+        order Moller-Plesset perturbation energy expression.
+    """
     chi2_tensor = np.einsum('qa,ri,qrp',
                             virtual_matrix,
                             occupied_matrix,
@@ -231,7 +274,26 @@ def transform_interaction_tensor(occupied_matrix, virtual_matrix,
     return interaction_tensor
 
 def calculate_energy_mp2(fock_matrix, interaction_matrix, chi_tensor):
-    '''Returns the MP2 contribution to the total energy defined by the input Fock & interaction matrices.'''
+    """Returns the MP2 contribution to the total energy defined by the input Fock & interaction matrices.
+    Parameters
+    ----------
+    fock_matrix : numpy.ndarray
+        A (ndof,ndof) array populated with 'float' data types. The elements of this matrix are constructed by
+        numerically computing an expectation value for the fock operator operating on a state vector.
+        The transformed state is then projected onto an orbital basis.
+    interaction_matrix : numpy.ndarray
+        A (ndof,ndof) array populated with 'float' data types. The elements of this matrix are
+        constructed by numerically computing an expectation value for the pairwise coulomic interactions
+        between electrons in orbitals {p} and {q}.
+    chi_tensor : numpy.ndarray
+        A rank 3 array, [ndof,ndof,ndof], indexed by {p} and {q} atomic orbitals and
+        r--the multipole moment index. The stored values are 'floats'.
+    Returns
+    -------
+    energy_mp2 : numpy.float64
+        The MP2 energy is a scalar that represents the sum of the HF energy and the energy correction
+        computed using second order Moller-Plesset perturbation thoery.
+    """
     E_occ, E_virt, occupied_matrix, virtual_matrix = partition_orbitals(
         fock_matrix)
     V_tilde = transform_interaction_tensor(occupied_matrix, virtual_matrix,
@@ -283,7 +345,7 @@ if __name__ == "__main__":
     'coulomb_s' : 0.3603533286088998,
     'coulomb_p' : -0.003267991835806299
     }
-    
+
     # Start energy calculation
 
     # electron-electron interaction matrix
@@ -294,13 +356,13 @@ if __name__ == "__main__":
     # Initial Hamiltonian and Density matrix
     hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, model_parameters)
     density_matrix = calculate_atomic_density_matrix(atomic_coordinates)
-    
+
     # Use density matrix to calculate Fock matrix, then use Fock matrix to calculate new density matrix??
     fock_matrix = calculate_fock_matrix(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
     density_matrix = calculate_density_matrix(fock_matrix)
 
     # SCF Cycle
-    density_matrix, fock_matrix = scf_cycle(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)  
+    density_matrix, fock_matrix = scf_cycle(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
     energy_ion = calculate_energy_ion(atomic_coordinates)
     energy_scf = calculate_energy_scf(hamiltonian_matrix, fock_matrix, density_matrix)
 
