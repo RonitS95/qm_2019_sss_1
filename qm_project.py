@@ -534,7 +534,3 @@ if __name__ == "__main__":
     interaction_tensor = transform_interaction_tensor(occupied_matrix, virtual_matrix, interaction_matrix, chi_tensor)
     energy_mp2 = calculate_energy_mp2(fock_matrix, interaction_matrix, chi_tensor)
     print(energy_mp2)
-<<<<<<< HEAD
-=======
-
->>>>>>> 3e7395fcedfa5b51ce0a8d8c60fd60bd2da95c23
