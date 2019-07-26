@@ -2,8 +2,8 @@ import numpy as np
 
 def atom(ao_index):
     '''Returns the atom index part of an atomic orbital index.
-    
-    Parameters
+   
+   	Parameters
     ----------
     ao_index : int
     
