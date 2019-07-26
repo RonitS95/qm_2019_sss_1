@@ -10,7 +10,7 @@ import os #may not need if xyz file shares the same directory as the program
 
 xyzfilename = sys.argv[2] #a cmd line argument
 
-if len(sys.argv) != 2:
+if len(sys.argv) != 3:
         print('Filename not specified. Please try again.')
         exit()
 
@@ -21,10 +21,6 @@ atom_labels = geom[0:,0]
 atomic_coordinates = geom[0:,1:]
 
 atomic_coordinates = atomic_coordinates.astype(np.float)
-
-if len(sys.argv) != 2:
-        print('Filename not specified. Please try again.')
-        exit()
 
 #these were provided in the original porject code--should be generalized for any set of coordinates
 atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
