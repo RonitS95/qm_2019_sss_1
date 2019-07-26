@@ -366,125 +366,132 @@ def calculate_atomic_density_matrix(atomic_coordinates):
         density_matrix[p, p] = orbital_occupation[orb(p)]
     return density_matrix
 
-def calculate_fock_matrix(hamiltonian_matrix, interaction_matrix,
-                          density_matrix, chi_tensor):
-    '''Returns the Fock matrix defined by the input Hamiltonian, interaction, & density matrices.
+class Hartree_Fock:
+    def __init__(self, hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor):
+        self.hamiltonian_matrix = hamiltonian_matrix
+        self.interaction_matrix = interaction_matrix
+        self.chi_tensor = chi_tensor
+        self.fock_matrix = self.calculate_fock_matrix(density_matrix)
+        self.density_matrix = self.calculate_density_matrix(self.fock_matrix)
+        self.energy_scf = self.calculate_energy_scf()
 
-    Parameters
-    ----------
-    hamiltonian_matrix : numpy.array
-        A 2D array of 1-body Hamiltonian matrix elements.
-    interaction_matrix : numpy.array
-        A 2D array of electron-electron interaction matrix elements.
-    density_matrix : numpy.array
-        A 2D array of 1-electron densities.
-    chi_tensor : numpy.array
-        A 3D array for the chi tensor, a 3-index tensor of p, q, and r. p and q are the atomic orbital indices and r is the multipole moment index.
+    def calculate_fock_matrix(self, density_matrix):
+        '''Returns the Fock matrix defined by the input Hamiltonian, interaction, & density matrices.
 
-    Returns
-    -------
-    fock_matrix : numpy.array
-        A 2D array of Fock matrix elements.
-    '''
-    fock_matrix = hamiltonian_matrix.copy()
-    fock_matrix += 2.0 * np.einsum('pqt,rsu,tu,rs',
-                                   chi_tensor,
-                                   chi_tensor,
-                                   interaction_matrix,
-                                   density_matrix,
-                                   optimize=True)
-    fock_matrix -= np.einsum('rqt,psu,tu,rs',
-                             chi_tensor,
-                             chi_tensor,
-                             interaction_matrix,
-                             density_matrix,
-                             optimize=True)
-    return fock_matrix
+        Parameters
+        ----------
+        hamiltonian_matrix : numpy.array
+            A 2D array of 1-body Hamiltonian matrix elements.
+        interaction_matrix : numpy.array
+            A 2D array of electron-electron interaction matrix elements.
+        density_matrix : numpy.array
+            A 2D array of 1-electron densities.
+        chi_tensor : numpy.array
+            A 3D array for the chi tensor, a 3-index tensor of p, q, and r. p and q are the atomic orbital indices and r is the multipole moment index.
 
-def calculate_density_matrix(fock_matrix):
-    '''Returns the 1-electron density matrix defined by the input Fock matrix.
+        Returns
+        -------
+        fock_matrix : numpy.array
+            A 2D array of Fock matrix elements.
+        '''
+        fock_matrix = self.hamiltonian_matrix.copy()
+        fock_matrix += 2.0 * np.einsum('pqt,rsu,tu,rs',
+                                       self.chi_tensor,
+                                       self.chi_tensor,
+                                       self.interaction_matrix,
+                                       density_matrix,
+                                       optimize=True)
+        fock_matrix -= np.einsum('rqt,psu,tu,rs',
+                                 self.chi_tensor,
+                                 self.chi_tensor,
+                                 self.interaction_matrix,
+                                 density_matrix,
+                                 optimize=True)
+        return fock_matrix
 
-       Parameters
-       ----------
-       fock_matrix : np.array 
-           The fock matrix is a numpy array of size (ndof,ndof)
+    def calculate_density_matrix(self, fock_matrix):
+        '''Returns the 1-electron density matrix defined by the input Fock matrix.
 
-       Returns
-       -------
-       density_matrix : np.array
-           The density matrix is a numpy array of size (ndof,ndof) that is the product of the
-           occupied MOs with the transpose of the occupied MOs.
+           Parameters
+           ----------
+           fock_matrix : np.array 
+               The fock matrix is a numpy array of size (ndof,ndof)
+
+           Returns
+           -------
+           density_matrix : np.array
+               The density matrix is a numpy array of size (ndof,ndof) that is the product of the
+               occupied MOs with the transpose of the occupied MOs.
            
-    '''
-    num_occ = (ionic_charge // 2) * np.size(fock_matrix,
-                                            0) // orbitals_per_atom
-    orbital_energy, orbital_matrix = np.linalg.eigh(fock_matrix)
-    occupied_matrix = orbital_matrix[:, :num_occ]
-    density_matrix = occupied_matrix @ occupied_matrix.T
-    return density_matrix
+        '''
+        num_occ = (ionic_charge // 2) * np.size(fock_matrix,
+                                                0) // orbitals_per_atom
+        orbital_energy, orbital_matrix = np.linalg.eigh(fock_matrix)
+        occupied_matrix = orbital_matrix[:, :num_occ]
+        density_matrix = occupied_matrix @ occupied_matrix.T
+        return density_matrix
 
-def scf_cycle(hamiltonian_matrix, interaction_matrix, density_matrix,
-              chi_tensor, max_scf_iterations = 100,
-              mixing_fraction = 0.25, convergence_tolerance = 1e-4):
-    '''Returns converged density & Fock matrices defined by the input Hamiltonian, interaction, & density matrices.
+    def scf_cycle(self, max_scf_iterations = 100, mixing_fraction = 0.25, convergence_tolerance = 1e-4):
+        '''Returns converged density & Fock matrices defined by the input Hamiltonian, interaction, & density matrices.
 
-       Parameters
-       ----------
-       hamiltonian_matrix : np.array
-           This is the hamiltonain matrix as a numpy array of size(ndof,ndof)
-       interaction_matrix : np.array
-           This is the interaction matrix as a numpy array of size(ndof,ndof)
-       density_matrix : np.array
-           this is the MO density matrix as a numpy array of size(ndof,ndof)
-       chi_tensor : np.array
-           This is th chi tensor as a numpy array of size(ndof,ndof,ndof)
-       max_scf_iteration : int,optional
-           This is the maximum number of iterations that the Cycle should take to try and converge. Default is 100 
+           Parameters
+           ----------
+           hamiltonian_matrix : np.array
+               This is the hamiltonain matrix as a numpy array of size(ndof,ndof)
+           interaction_matrix : np.array
+               This is the interaction matrix as a numpy array of size(ndof,ndof)
+           density_matrix : np.array
+               this is the MO density matrix as a numpy array of size(ndof,ndof)
+           chi_tensor : np.array
+               This is th chi tensor as a numpy array of size(ndof,ndof,ndof)
+           max_scf_iteration : int,optional
+               This is the maximum number of iterations that the Cycle should take to try and converge. Default is 100 
 
-       Returns
-       -------
-       new_density_matrix: np.array
-           This is returned either as the converged density or non-converged if max_iterations is passed,
-           it is a numpy array of size(ndof,ndof) 
-       new_fock_matrix: np.array
-           This is either the converged fock matrix or non-converged if max_iterations is passed and the
-           warning is printed. The output array is of size(ndof,ndof)
-       '''
+           Returns
+           -------
+           new_density_matrix: np.array
+               This is returned either as the converged density or non-converged if max_iterations is passed,
+               it is a numpy array of size(ndof,ndof) 
+           new_fock_matrix: np.array
+               This is either the converged fock matrix or non-converged if max_iterations is passed and the
+               warning is printed. The output array is of size(ndof,ndof)
+           '''
 
-    old_density_matrix = density_matrix.copy()
-    for iteration in range(max_scf_iterations):
-        new_fock_matrix = calculate_fock_matrix(hamiltonian_matrix, interaction_matrix, old_density_matrix, chi_tensor)
-        new_density_matrix = calculate_density_matrix(new_fock_matrix)
+        old_density_matrix = self.density_matrix.copy()
+        for iteration in range(max_scf_iterations):
+            new_fock_matrix = self.calculate_fock_matrix(old_density_matrix)
+            new_density_matrix = self.calculate_density_matrix(new_fock_matrix)
 
-        error_norm = np.linalg.norm( old_density_matrix - new_density_matrix )
-        if error_norm < convergence_tolerance:
-            return new_density_matrix, new_fock_matrix
+            error_norm = np.linalg.norm( old_density_matrix - new_density_matrix )
+            if error_norm < convergence_tolerance:
+                return new_density_matrix, new_fock_matrix
 
-        old_density_matrix = (mixing_fraction * new_density_matrix
-                              + (1.0 - mixing_fraction) * old_density_matrix)
-    print("WARNING: SCF cycle didn't converge")
-    return new_density_matrix, new_fock_matrix
+            old_density_matrix = (mixing_fraction * new_density_matrix
+                                  + (1.0 - mixing_fraction) * old_density_matrix)
+        print("WARNING: SCF cycle didn't converge")
+        return new_density_matrix, new_fock_matrix
 
-def calculate_energy_scf(hamiltonian_matrix, fock_matrix, density_matrix):
-    '''Returns the Hartree-Fock total energy defined by the input Hamiltonian, Fock, & density matrices.
+    def calculate_energy_scf(self):
+        '''Returns the Hartree-Fock total energy defined by the input Hamiltonian, Fock, & density matrices.
 
-       Parameters
-       ----------
-       hamiltonian_matrix : np.array
-           This is the hamiltoian matrix calculated in calculate_hamiltonian_matrix, it is a numpy array of size(ndof,ndof)
-       fock_matrix : np.array
-           This is the fock matrix calculated in scf_cycle, it is a nupmy array of size (ndof,ndof)
-       density_marix : np.array           
-           This is the density matrix calculated in scf_cycle, it is a nupmy array of size (ndof,ndof)
+           Parameters
+           ----------
+           hamiltonian_matrix : np.array
+               This is the hamiltoian matrix calculated in calculate_hamiltonian_matrix, it is a numpy array of size(ndof,ndof)
+           fock_matrix : np.array
+               This is the fock matrix calculated in scf_cycle, it is a nupmy array of size (ndof,ndof)
+           density_marix : np.array           
+               This is the density matrix calculated in scf_cycle, it is a nupmy array of size (ndof,ndof)
 
-       Returns
-       -------
-       energy_scf : float
-           This is the energy of the ground state of the atoms from the SCF calcuation. It is ouput as a float.
-    '''
-    energy_scf = np.einsum('pq,pq', hamiltonian_matrix + fock_matrix,
-                           density_matrix)
-    return energy_scf
+           Returns
+           -------
+           energy_scf : float
+               This is the energy of the ground state of the atoms from the SCF calcuation. It is ouput as a float.
+        '''
+        self.density_matrix, self.fock_matrix = self.scf_cycle(*scf_params)
+        print("Density matrix and Fock matrix calculated.")
+        energy_scf = np.einsum('pq,pq', self.hamiltonian_matrix + self.fock_matrix, self.density_matrix)
+        return energy_scf
 
 def partition_orbitals(fock_matrix):
     """Returns a list with the occupied/virtual energies & orbitals defined by the input Fock matrix.
@@ -607,6 +614,19 @@ orbital_occupation = { 's':0, 'px':1, 'py':1, 'pz':1 }
 
 
 if __name__ == "__main__":
+    scf_params = []
+    try:
+        scf_params.append(int(input("Maximum number of scf iterations (default = 100):\n")))
+    except:
+        pass
+    try:
+        scf_params.append(float(input("Mixing fraction (default = 0.25):\n")))
+    except:
+        pass
+    try:
+        scf_params.append(float(input("Convergence_tolerance (default = 1e-4):\n")))
+    except:
+        pass
 
     # User input
     atomic_coordinates = np.array([[0.0, 0.0, 0.0], [3.0, 4.0, 5.0]])
@@ -629,6 +649,7 @@ if __name__ == "__main__":
     'coulomb_p' : -0.003267991835806299
     }
 
+
     # Start energy calculation
 
     # electron-electron interaction matrix
@@ -639,6 +660,11 @@ if __name__ == "__main__":
     # Initial Hamiltonian and Density matrix
     hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, model_parameters)
     density_matrix = calculate_atomic_density_matrix(atomic_coordinates)
+
+    '''
+    calculation = Hartree_Fock(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
+    print(calculation.energy_scf)
+    '''
 
     # Use density matrix to calculate Fock matrix, then use Fock matrix to calculate new density matrix??
     fock_matrix = calculate_fock_matrix(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
@@ -658,4 +684,3 @@ if __name__ == "__main__":
     energy_mp2 = calculate_energy_mp2(fock_matrix, interaction_matrix, chi_tensor)
 
     print(energy_mp2)
-
