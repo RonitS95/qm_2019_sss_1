@@ -1,5 +1,4 @@
 import numpy as np
-import sys
 
 def atom(ao_index):
     '''Returns the atom index part of an atomic orbital index.
@@ -628,8 +627,6 @@ if __name__ == "__main__":
         scf_params.append(float(input("Convergence_tolerance (default = 1e-4):\n")))
     except:
         pass
-    #mixing_fraction = float(input("Mixing fraction (default = 0.25):\n"))
-    #convergence_tolerance = float(input("Convergence_tolerance (default = 1e-4):\n"))
 
     # User input
     atomic_coordinates = np.array([[0.0, 0.0, 0.0], [3.0, 4.0, 5.0]])
