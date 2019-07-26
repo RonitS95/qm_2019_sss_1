@@ -1,18 +1,43 @@
 import json
 import numpy as np
 import sys
+import os #may not need if xyz file shares the same directory as the program
+
+#Adding feature to read from .xyz geometry file -AZ
+#may or may not be read from the working directory
+
+#Integrate within Nobel_Gas_model if desired @Ronit
+
+xyzfilename = sys.argv[2] #a cmd line argument
+
+if len(sys.argv) != 3:
+        print('Filename not specified. Please try again.')
+        exit()
+
+geom_file = os.path.join(xyzfilename) #adjust path if needed
+
+geom = np.genfromtxt(fname=geom_file,skip_header=2, dtype='unicode')
+atom_labels = geom[0:,0]
+atomic_coordinates = geom[0:,1:]
+
+atomic_coordinates = atomic_coordinates.astype(np.float)
+
+#these were provided in the original porject code--should be generalized for any set of coordinates
+atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
+
+
 
 class Nobel_Gas_model:
     def __init__(self):
 
         self.model_parameters = self.assign_model_parameters()
-        self.ionic_charge = 6 
+        self.ionic_charge = 6
         self.orbital_types = ['s', 'px', 'py', 'pz']
         self.p_orbitals = self.orbital_types[1:]
         self.orbitals_per_atom = len(self.orbital_types)
         self.vec = {'px': [1.0,0.0,0.0], 'py' : [0.0, 1.0, 0.0], 'pz' : [0.0, 0.0, 1.0]}
         self.orbital_occupations = {'s' : 0, 'px' : 1, 'py' : 1, 'pz' : 1 }
-    
+
     def assign_model_parameters(self):
         filename = sys.argv[1]
         commands = {}
@@ -21,7 +46,7 @@ class Nobel_Gas_model:
                 command, description = line.strip().split(',', 1)
                 commands[command] = float(description.strip())
         return commands
-    
+
     def orb(self, ao_index):
         orb_index = ao_index % self.orbitals_per_atom
         return self.orbital_types[orb_index]
@@ -45,7 +70,8 @@ for index in range(2*system.orbitals_per_atom):
     orb_p = system.orb(index)
     print(index, system.ao_index(atom_p,orb_p))
 
-atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
+#see above
+#atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
 
 def hopping_energy(o1, o2, r12, model_parameters):
     r12_rescaled = r12 / model_parameters['r_hop']
@@ -121,7 +147,7 @@ def calculate_interaction_matrix(atomic_coordinates, model_parameters):
             if p == q and system.orb(p) == 's':
                 interaction_matrix[p,q] = system.model_parameters['coulomb_s']
             if p == q and system.orb(p) in system.p_orbitals:
-                interaction_matrix[p,q] = system.model_parameters['coulomb_p']                
+                interaction_matrix[p,q] = system.model_parameters['coulomb_p']
     return interaction_matrix
 
 interaction_matrix = calculate_interaction_matrix(atomic_coordinates, system.model_parameters)
@@ -171,6 +197,7 @@ def calculate_hamiltonian_matrix(atomic_coordinates, model_parameters):
                     hamiltonian_matrix[p,q] += ( chi_on_atom(system.orb(p), system.orb(q), orb_r, system.model_parameters)
                                                  * potential_vector[r] )
     return hamiltonian_matrix
+
 hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, system.model_parameters)
 
 def calculate_atomic_density_matrix(atomic_coordinates):
