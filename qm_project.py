@@ -366,7 +366,6 @@ def calculate_atomic_density_matrix(atomic_coordinates):
         density_matrix[p, p] = orbital_occupation[orb(p)]
     return density_matrix
 
-<<<<<<< HEAD
 def calculate_fock_matrix(hamiltonian_matrix, interaction_matrix,
                           density_matrix, chi_tensor):
     '''Returns the Fock matrix defined by the input Hamiltonian, interaction, & density matrices.
@@ -486,7 +485,6 @@ def calculate_energy_scf(hamiltonian_matrix, fock_matrix, density_matrix):
     energy_scf = np.einsum('pq,pq', hamiltonian_matrix + fock_matrix,
                            density_matrix)
     return energy_scf
-=======
 class Hartree_Fock:
     def __init__(self, hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor):
         self.hamiltonian_matrix = hamiltonian_matrix
@@ -613,7 +611,6 @@ class Hartree_Fock:
         print("Density matrix and Fock matrix calculated.")
         energy_scf = np.einsum('pq,pq', self.hamiltonian_matrix + self.fock_matrix, self.density_matrix)
         return energy_scf
->>>>>>> 77c7f30719ef24941a578e69b7cf7a710d5f22b3
 
 def partition_orbitals(fock_matrix):
     """Returns a list with the occupied/virtual energies & orbitals defined by the input Fock matrix.
