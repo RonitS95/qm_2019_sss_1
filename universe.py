@@ -2,27 +2,8 @@ import json
 import numpy as np
 import sys
 
-#import pandas as pd
-
-#filename = 'data.txt'
-
-#commands = {}
-#with open(filename) as fh:
-#    for line in fh:
-#        command, description = line.strip().split(' ', 1)
-#        commands[command] = float(description.strip())
-
-#model_parameters = json.dumps(commands, indent=2, sort_keys=True)
-#model_parameters = commands
-
-
 class Nobel_Gas_model:
     def __init__(self):
-       # if isinstance(gas, str): 
-       #     self.gas = gas
-       # else:
-        
-       #     raise TypeError('Gas Name should be str')
 
         self.model_parameters = self.assign_model_parameters()
         self.ionic_charge = 6 
@@ -51,11 +32,6 @@ class Nobel_Gas_model:
         p += self.orbital_types.index(orb_p)
         return p
 
-
-#    def __str__(self):
-#        return "The Model Parameters are for the gas " + self.gas 
-
-#---------------------------------------------------#
 system = Nobel_Gas_model()
 #print(system)
 print(system.model_parameters)
@@ -68,16 +44,8 @@ for index in range(2*system.orbitals_per_atom):
     atom_p = system.atom(index)
     orb_p = system.orb(index)
     print(index, system.ao_index(atom_p,orb_p))
-#----------------------------------------------------#
 
-
-###############################################
-# 1. Define Atomic Coordinates 
 atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
-
-
-# 2. Define ndof, since its used in a lot of functions
-################################################
 
 def hopping_energy(o1, o2, r12, model_parameters):
     r12_rescaled = r12 / model_parameters['r_hop']
@@ -109,8 +77,6 @@ def coulomb_energy(o1, o2, r12):
                - 3.0 * np.dot(system.vec[o1], r12) * np.dot(system.vec[o2], r12) / r12_length**5 )
     return ans
 
-
-
 def pseudopotential_energy(o, r, model_parameters):
     '''Returns the energy of a pseudopotential between a multipole of type o and an atom separated by a system.vector r.'''
     ans = model_parameters['v_pseudo']
@@ -121,10 +87,6 @@ def pseudopotential_energy(o, r, model_parameters):
         ans *= -2.0 * np.dot(system.vec[o], r_rescaled)
     return ans
 
-
-
-
-
 def calculate_energy_ion(atomic_coordinates):
     '''Returns the ionic contribution to the total energy for an input list of atomic coordinates.'''
     energy_ion = 0.0
@@ -133,13 +95,6 @@ def calculate_energy_ion(atomic_coordinates):
             if i < j:
                 energy_ion += (ionic_charge**2)*coulomb_energy('s', 's', r_i - r_j)
     return energy_ion
-
-
-
-
-
-
-
 
 def calculate_potential_vector(atomic_coordinates, model_parameters):
     '''Returns the electron-ion potential energy system.vector for an input list of atomic coordinates.'''
@@ -153,14 +108,6 @@ def calculate_potential_vector(atomic_coordinates, model_parameters):
                 potential_vector[p] += ( pseudopotential_energy(system.orb(p), r_pi, system.model_parameters)
                                          - system.ionic_charge * coulomb_energy(system.orb(p), 's', r_pi) )
     return potential_vector
-
-
-
-
-
-
-
-
 
 def calculate_interaction_matrix(atomic_coordinates, model_parameters):
     '''Returns the electron-electron interaction energy matrix for an input list of atomic coordinates.'''
@@ -178,15 +125,6 @@ def calculate_interaction_matrix(atomic_coordinates, model_parameters):
     return interaction_matrix
 
 interaction_matrix = calculate_interaction_matrix(atomic_coordinates, system.model_parameters)
-#print('V_ee =\n', interaction_matrix)
-
-
-
-
-
-
-
-
 
 def chi_on_atom(o1, o2, o3, model_parameters):
     '''Returns the value of the chi tensor for 3 orbital indices on the same atom.'''
@@ -212,8 +150,6 @@ def calculate_chi_tensor(atomic_coordinates, model_parameters):
 
 chi_tensor = calculate_chi_tensor(atomic_coordinates, system.model_parameters)
 #print('chi =\n',chi_tensor)
-    
-
 
 def calculate_hamiltonian_matrix(atomic_coordinates, model_parameters):
     '''Returns the 1-body Hamiltonian matrix for an input list of atomic coordinates.'''
@@ -236,9 +172,6 @@ def calculate_hamiltonian_matrix(atomic_coordinates, model_parameters):
                                                  * potential_vector[r] )
     return hamiltonian_matrix
 hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, system.model_parameters)
-#print('Hamiltonian Matrix = \n', hamiltonian_matrix)
-
-
 
 def calculate_atomic_density_matrix(atomic_coordinates):
     '''Returns a trial 1-electron density matrix for an input list of atomic coordinates.'''
@@ -249,138 +182,3 @@ def calculate_atomic_density_matrix(atomic_coordinates):
     return density_matrix
 
 density_matrix = calculate_atomic_density_matrix(atomic_coordinates)
-#print('atomic density matrix =\n', density_matrix)
-
-
-## Hartree Fock Class#######################################
-
-
-                   
-                                                                                           
-                                                    
-                                                    
-                                    
-                                                                     
-                                                                             
-                                                     
-                                                    
-
-                                                    
-                                                                                                     
-                  
-                  
-                                        
-                                                             
-                                        
-                                                                        
-                                    
-                                               
-                                
-                                                                                                                                                       
-               
-               
-                                 
-                                               
-           
-                                                    
-                                                       
-                                                       
-                                                       
-                                                               
-                                                      
-                                                     
-                                                 
-                                                 
-                                                 
-                                                         
-                                                
-                                               
-                          
-
-                                                    
-                                                                                  
-                     
-                     
-                                 
-                                                                   
-                  
-                  
-                                    
-                                                                                                 
-                                                                   
-
-           
-                                                                                                   
-                                                                    
-                                                     
-                                                            
-                             
-
-                                                                                                        
-                                                                                                                       
-                     
-                     
-                                        
-                                                                                 
-                                        
-                                                                                 
-                                    
-                                                                                
-                                
-                                                                             
-                                           
-                                                                                                                      
-                  
-                  
-                                       
-                                                                                                             
-                                                     
-                                    
-                                                                                                            
-                                                                         
-              
-
-                                                       
-                                                   
-                                                                            
-                                                                               
-
-                                                                                  
-                                                  
-                                                          
-
-                                                                      
-                                                                                 
-                                                   
-                                                  
-
-                                   
-                                                                                                            
-                     
-                     
-                                        
-                                                                                                                               
-                                 
-                                                                                                       
-                                   
-                                                                                                          
-                  
-                  
-                             
-                                                                                                                   
-           
-                                                                           
-                                                           
-                                                                                                        
-                         
-
-                           
-                                                
-
-
-
-
-                          
-                                                                                              
-
-
