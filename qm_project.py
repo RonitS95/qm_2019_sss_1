@@ -489,7 +489,8 @@ class Hartree_Fock:
            energy_scf : float
                This is the energy of the ground state of the atoms from the SCF calcuation. It is ouput as a float.
         '''
-        self.density_matrix, self.fock_matrix = self.scf_cycle()
+        self.density_matrix, self.fock_matrix = self.scf_cycle(*scf_params)
+        print("Density matrix and Fock matrix calculated.")
         energy_scf = np.einsum('pq,pq', self.hamiltonian_matrix + self.fock_matrix, self.density_matrix)
         return energy_scf
 
@@ -614,6 +615,22 @@ orbital_occupation = { 's':0, 'px':1, 'py':1, 'pz':1 }
 
 
 if __name__ == "__main__":
+    scf_params = []
+    try:
+        scf_params.append(int(input("Maximum number of scf iterations (default = 100):\n")))
+    except:
+        pass
+    try:
+        scf_params.append(float(input("Mixing fraction (default = 0.25):\n")))
+    except:
+        pass
+    try:
+        scf_params.append(float(input("Convergence_tolerance (default = 1e-4):\n")))
+    except:
+        pass
+    #mixing_fraction = float(input("Mixing fraction (default = 0.25):\n"))
+    #convergence_tolerance = float(input("Convergence_tolerance (default = 1e-4):\n"))
+
     # User input
     atomic_coordinates = np.array([[0.0, 0.0, 0.0], [3.0, 4.0, 5.0]])
     # Derived from user input
