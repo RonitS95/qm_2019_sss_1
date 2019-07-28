@@ -1,0 +1,226 @@
+#include <iostream>
+#include <vector>
+#include <Eigen/Dense>
+//#include <math.h>
+#include <algorithm>
+
+using std::cout; using std::endl; using std::vector; using std::string;
+
+typedef Eigen::MatrixXd matrix;
+
+int atom(int ao_index, int orbitals_per_atom)
+{
+    return ao_index / orbitals_per_atom; //floor
+}
+
+int ao_index(int atom_p, string orb_p, vector<string> orbitals, int orbitals_per_atom)
+{
+    int p = atom_p * orbitals_per_atom;
+    //std::vector<int>::iterator
+    auto itr = std::find(orbitals.begin(), orbitals.end(), orb_p);
+    int dist;
+    dist = std::distance(orbitals.begin(), itr);
+    p = p + dist;
+
+    return p;
+}
+
+string orb(int ao_index, vector<string> orbitals, int orbitals_per_atom)
+{
+    int orb_index = ao_index % orbitals_per_atom;
+    
+    return orbitals.at(orb_index);
+}
+
+template <typename T, typename U>
+bool in_vector(U elem, const vector<T>& vec)
+{
+    return (std::find(vec.begin(), vec.end(), elem) != vec.end()) ? true : false;
+}
+
+template <typename T>
+vector<T> slice(vector<T>& vec, int i, int f)
+{
+    vector<T> sliced(f - i + 1);
+    std::copy(vec.begin() + i, vec.begin() + f + 1, sliced.begin());
+    return sliced;
+}
+
+float chi_on_atom(string o1, string o2, string o3, vector<string> orbitals, double dipole)
+{
+    if (o1 == o2 && o3 == "s")
+        return 1.0;
+    else if (o1 == o3 && in_vector(o3, slice(orbitals, 1, orbitals.size() - 1)) && o2 == "s")
+        return dipole;
+    else if (o2 == o3 && in_vector(o3, slice(orbitals, 1, orbitals.size() - 1)) && o1 == "s")
+        return dipole;
+    return 0.0;
+}
+
+matrix calculate_fock_matrix(matrix hamiltonian_matrix, matrix interaction_matrix, matrix density_matrix, double dipole)
+{
+    int ndof = hamiltonian_matrix.row(0).size();
+    matrix fock_matrix = &hamiltonian_matrix;
+
+    for (int p = 0, p <= ndof, p++)
+    {
+        for (int orb_q = 0, orb_q <= orbitals.size(), orb_q++)
+        {
+            int q = ao_index(atom(p), orbitals.at(orb_q), orbitals, orbitals_per_atom);
+            for (int orb_t = 0, orb_t <= orbitals.size(), orb_t++)
+            {
+                int t = ao_index(atom(p), orbitals.at(orb_t), orbitals, orbitals_per_atom);
+                float chi_pqt = chi_on_atom(orb(p), orb_q, orb_t, orbitals, dipole);
+                for (int r = 0, r <= ndof, r++)
+                {
+                    for (int orb_s = 0, orb_s <= orbitals.size(), orb_s++)
+                    {
+                        int s = ao_index(atom(r), orbitals.at(orb_s), orbitals, orbitals_per_atom);
+                        for (int orb_u = 0, orb_u <= orbitals.size(), orb_u++)
+                        {
+                            int u = ao_index(atom(r), orbitals.at(orb_u), orbitals, orbitals_per_atom);
+                            float chi_rsu = chi_on_atom(orb(r), orb_s, orb_u, orbitals, dipole);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (int p = 0, p <= ndof, p++)
+    {
+        for (int orb_s = 0, orb_s <= orbitals.size(), orb_s++)
+        {
+            int s = ao_index(atom(p), orbitals.at(orb_s), orbitals, orbitals_per_atom);
+            for (int orb_u = 0, orb_u <= orbitals.size(), orb_u++)
+            {
+                int u = ao_index(atom(p), orbitals.at(orb_u), orbitals, orbitals_per_atom);
+                float chi_rsu = chi_on_atom(orb(p), orb_s, orb_u, orbitals, dipole);
+                for (int q = 0, q <= ndof, q++)
+                {
+                    for (int orb_r = 0, orb_r <= orbitals.size(), orb_r++)
+                    {
+                        int r = ao_index(atom(q), orbitals.at(orb_r), orbitals, orbitals_per_atom);
+                        for (int orb_t = 0, orb_t <= orbitals.size(), orb_t++)
+                        {
+                            int t = ao_index(atom(q), orbitals.at(orb_t), orbitals, orbitals_per_atom);
+                            float chi_rqt = chi_on_atom(orb(r), orb_q, orb_t, orbitals, dipole);
+                            fock_matrix(p,q) -= chi_rqt * chi_psu * interaction_matrix(t, u) * density_matrix(r, s)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/*
+def calculate_fock_matrix_fast(hamiltonian_matrix, interaction_matrix, density_matrix, model_parameters):
+    '''Returns the Fock matrix defined by the input Hamiltonian, interaction, & density matrices.'''
+    ndof = np.size(hamiltonian_matrix,0)
+    fock_matrix = hamiltonian_matrix.copy()
+    # Hartree potential term
+    for p in range(ndof):
+        for orb_q in orbital_types:
+            q = ao_index(atom(p), orb_q) # p & q on same atom
+            for orb_t in orbital_types:
+                t = ao_index(atom(p), orb_t) # p & t on same atom
+                chi_pqt = chi_on_atom(orb(p), orb_q, orb_t, model_parameters)
+                for r in range(ndof):
+                    for orb_s in orbital_types:
+                        s = ao_index(atom(r), orb_s) # r & s on same atom
+                        for orb_u in orbital_types:
+                            u = ao_index(atom(r), orb_u) # r & u on same atom
+                            chi_rsu = chi_on_atom(orb(r), orb_s, orb_u, model_parameters)
+                            fock_matrix[p,q] += 2.0 * chi_pqt * chi_rsu * interaction_matrix[t,u] * density_matrix[r,s]
+    # Fock exchange term
+    for p in range(ndof):
+        for orb_s in orbital_types:
+            s = ao_index(atom(p), orb_s) # p & s on same atom
+            for orb_u in orbital_types:
+                u = ao_index(atom(p), orb_u) # p & u on same atom
+                chi_psu = chi_on_atom(orb(p), orb_s, orb_u, model_parameters)
+                for q in range(ndof):
+                    for orb_r in orbital_types:
+                        r = ao_index(atom(q), orb_r) # q & r on same atom
+                        for orb_t in orbital_types:
+                            t = ao_index(atom(q), orb_t) # q & t on same atom
+                            chi_rqt = chi_on_atom(orb_r, orb(q), orb_t, model_parameters)
+                            fock_matrix[p,q] -= chi_rqt * chi_psu * interaction_matrix[t,u] * density_matrix[r,s]
+    return fock_matrix
+
+fock_matrix1 = calculate_fock_matrix(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
+fock_matrix2 = calculate_fock_matrix_fast(hamiltonian_matrix, interaction_matrix, density_matrix, model_parameters)
+print('difference between fock matrix implementations =', np.linalg.norm(fock_matrix1 - fock_matrix2))
+*/
+
+/*
+Eigen::matrixXd calculate_fock_matrix(Eigen::matrixXd hamiltonian_matrix, Eigen::matrixXd interaction_matrix, Eigen::matrixXd density_matrix, Eigen::matrixXd model_parameters)
+{
+
+}
+*/
+
+int main()
+{
+    Eigen::MatrixXd ham_test(8,8);
+    ham_test << 2.31745554e+00, -1.41367040e-01, -1.88489387e-01, -2.35611734e-01,
+    6.53808346e-04,  5.34076767e-04,  7.12102356e-04,  8.90127945e-04, -1.41367040e-01,
+    -3.24117641e+00,  0.00000000e+00,  0.00000000e+00, -5.34076767e-04,  2.92479412e-04,
+    2.17340049e-03,  2.71675062e-03,  -1.88489387e-01,  0.00000000e+00, -3.24117641e+00,
+    0.00000000e+00,  -7.12102356e-04,  2.17340049e-03,  1.56029637e-03,  3.62233416e-03,
+    -2.35611734e-01,  0.00000000e+00,  0.00000000e+00, -3.24117641e+00, -8.90127945e-04,
+    2.71675062e-03,  3.62233416e-03,  3.19034674e-03,  6.53808346e-04, -5.34076767e-04,
+    -7.12102356e-04, -8.90127945e-04,  2.31745554e+00,  1.41367040e-01,  1.88489387e-01,
+    2.35611734e-01,  5.34076767e-04,  2.92479412e-04,  2.17340049e-03,  2.71675062e-03,
+    1.41367040e-01, -3.24117641e+00,  0.00000000e+00,  0.00000000e+00,  7.12102356e-04,
+    2.17340049e-03,  1.56029637e-03,  3.62233416e-03,  1.88489387e-01,  0.00000000e+00,
+    -3.24117641e+00,  0.00000000e+00,  8.90127945e-04,  2.71675062e-03,  3.62233416e-03,
+    3.19034674e-03,  2.35611734e-01,  0.00000000e+00,  0.00000000e+00, -3.24117641e+00;
+
+    Eigen::MatrixXd int_test(8,8);
+    int_test << 3.60353329e-01,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+   1.41421356e-01, -8.48528137e-03, -1.13137085e-02, -1.41421356e-02,
+    0.00000000e+00, -3.26799184e-03,  0.00000000e+00,  0.00000000e+00,
+   8.48528137e-03,  1.30107648e-03, -2.03646753e-03, -2.54558441e-03,
+    0.00000000e+00,  0.00000000e+00, -3.26799184e-03,  0.00000000e+00,
+   1.13137085e-02, -2.03646753e-03,  1.13137085e-04, -3.39411255e-03,
+    0.00000000e+00,  0.00000000e+00,  0.00000000e+00, -3.26799184e-03,
+   1.41421356e-02, -2.54558441e-03, -3.39411255e-03, -1.41421356e-03,
+    1.41421356e-01,  8.48528137e-03,  1.13137085e-02,  1.41421356e-02,
+   3.60353329e-01,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+   -8.48528137e-03,  1.30107648e-03, -2.03646753e-03, -2.54558441e-03,
+   0.00000000e+00, -3.26799184e-03,  0.00000000e+00,  0.00000000e+00,
+   -1.13137085e-02, -2.03646753e-03,  1.13137085e-04, -3.39411255e-03,
+   0.00000000e+00,  0.00000000e+00, -3.26799184e-03,  0.00000000e+00,
+   -1.41421356e-02, -2.54558441e-03, -3.39411255e-03, -1.41421356e-03,
+   0.00000000e+00,  0.00000000e+00,  0.00000000e+00, -3.26799184e-03;
+
+    Eigen::MatrixXd dens_test(8,8);
+    dens_test << 0., 0., 0., 0., 0., 0., 0., 0.,
+ 0., 1., 0., 0., 0., 0., 0., 0.,
+ 0., 0., 1., 0., 0., 0., 0., 0.,
+ 0., 0., 0., 1., 0., 0., 0., 0.,
+ 0., 0., 0., 0., 0., 0., 0., 0.,
+ 0., 0., 0., 0., 0., 1., 0., 0.,
+ 0., 0., 0., 0., 0., 0., 1., 0.,
+ 0., 0., 0., 0., 0., 0., 0., 1.;
+
+    vector<string> orbitals{"s", "px" ,"py", "pz"};
+    int orbitals_per_atom = orbitals.size();
+    double dipole(2.781629275106456);
+
+    //cout << ham_test << endl;
+
+    //cout << floor(2.0 / 3) << " " << floor(2.3) << endl;
+    string test_str("px");
+
+    int test_atom = atom(2, orbitals_per_atom);
+    int test_ao_index = ao_index(2, "px", orbitals, orbitals_per_atom);
+    string orb_test = orb(test_ao_index, orbitals, orbitals_per_atom);
+    bool in_vector_test = in_vector("px", orbitals);
+    vector<string> test_slice = slice(orbitals, 1, 2);
+    float chi_test = chi_on_atom("px", "py", "px", orbitals, dipole);
+    cout << orbitals_per_atom << " " << test_atom << " " << test_ao_index << " " << orb_test << " " << in_vector_test << " " << chi_test << endl;
+
+    return 0;
+}
