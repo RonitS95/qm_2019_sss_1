@@ -660,8 +660,12 @@ if __name__ == "__main__":
     # Initial Hamiltonian and Density matrix
     hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, model_parameters)
     density_matrix = calculate_atomic_density_matrix(atomic_coordinates)
+    
+    #print(hamiltonian_matrix)
+    #print(interaction_matrix)
+    #print(density_matrix)
+    #print(chi_tensor)
 
-    '''
     calculation = Hartree_Fock(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
     print(calculation.energy_scf)
     '''
@@ -684,3 +688,4 @@ if __name__ == "__main__":
     energy_mp2 = calculate_energy_mp2(fock_matrix, interaction_matrix, chi_tensor)
 
     print(energy_mp2)
+    '''
