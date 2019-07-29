@@ -779,12 +779,16 @@ if __name__ == "__main__":
     # Initial Hamiltonian and Density matrix
     hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, model_parameters)
     density_matrix = calculate_atomic_density_matrix(atomic_coordinates)
+    
+    #print(hamiltonian_matrix)
+    #print(interaction_matrix)
+    #print(density_matrix)
+    #print(chi_tensor)
 
-    '''
     calculation = Hartree_Fock(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
     print(calculation.energy_scf)
-    '''
 
+    '''
     # Use density matrix to calculate Fock matrix, then use Fock matrix to calculate new density matrix??
     fock_matrix = calculate_fock_matrix(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
     density_matrix = calculate_density_matrix(fock_matrix)
@@ -802,3 +806,4 @@ if __name__ == "__main__":
     interaction_tensor = transform_interaction_tensor(occupied_matrix, virtual_matrix, interaction_matrix, chi_tensor)
     energy_mp2 = calculate_energy_mp2(fock_matrix, interaction_matrix, chi_tensor)
     print(energy_mp2)
+    '''
