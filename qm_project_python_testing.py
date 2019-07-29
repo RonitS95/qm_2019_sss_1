@@ -8,19 +8,19 @@ import os #may not need if xyz file shares the same directory as the program
 
 #Integrate within Nobel_Gas_model if desired @Ronit
 
-xyzfilename = sys.argv[2] #a cmd line argument
+#xyzfilename = sys.argv[2] #a cmd line argument
 
-if len(sys.argv) != 3:
-        print('Filename not specified. Please try again.')
-        exit()
+#if len(sys.argv) != 3:
+#        print('Filename not specified. Please try again.')
+#        exit()
 
-geom_file = os.path.join(xyzfilename) #adjust path if needed
+#geom_file = os.path.join(xyzfilename) #adjust path if needed
 
-geom = np.genfromtxt(fname=geom_file,skip_header=2, dtype='unicode')
-atom_labels = geom[0:,0]
-atomic_coordinates = geom[0:,1:]
+#geom = np.genfromtxt(fname=geom_file,skip_header=2, dtype='unicode')
+#atom_labels = geom[0:,0]
+#atomic_coordinates = geom[0:,1:]
 
-atomic_coordinates = atomic_coordinates.astype(np.float)
+#atomic_coordinates = atomic_coordinates.astype(np.float)
 
 #these were provided in the original porject code--should be generalized for any set of coordinates
 atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
@@ -28,8 +28,8 @@ atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
 
 
 class Nobel_Gas_model:
-    def __init__(self):
-
+    def __init__(self, gas_model):
+        self.gas_model = gas_model 
         self.model_parameters = self.assign_model_parameters()
         self.ionic_charge = 6
         self.orbital_types = ['s', 'px', 'py', 'pz']
@@ -39,7 +39,7 @@ class Nobel_Gas_model:
         self.orbital_occupations = {'s' : 0, 'px' : 1, 'py' : 1, 'pz' : 1 }
 
     def assign_model_parameters(self):
-        filename = sys.argv[1]
+        filename = self.gas_model+'.txt'
         commands = {}
         with open(filename) as fh:
             for line in fh:
@@ -57,14 +57,9 @@ class Nobel_Gas_model:
         p += self.orbital_types.index(orb_p)
         return p
 
-<<<<<<< HEAD
-system = Nobel_Gas_model()
-#print(system)
-=======
 # system = Nobel_Gas_model()
 # print(system)
 # print(system.model_parameters)
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
 
 # for index in range(2*system.orbitals_per_atom):
 #     print('index',index,'atom',system.atom(index),'orbital',system.orb(index))
@@ -75,19 +70,10 @@ system = Nobel_Gas_model()
 #     orb_p = system.orb(index)
 #     print(index, system.ao_index(atom_p,orb_p))
 
-<<<<<<< HEAD
-print('index test:')
-for index in range(2*system.orbitals_per_atom):
-    atom_p = system.atom(index)
-    orb_p = system.orb(index)
-    print(index, system.ao_index(atom_p,orb_p))
-
-=======
  #see above
  #atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
 
-def hopping_energy(o1, o2, r12, model_parameters):
+def hopping_energy(o1, o2, r12, model_parameters, system):
     r12_rescaled = r12 / model_parameters['r_hop']
     r12_length = np.linalg.norm(r12_rescaled)
     ans = np.exp( 1.0 - r12_length**2 )
@@ -103,7 +89,7 @@ def hopping_energy(o1, o2, r12, model_parameters):
                  * ( model_parameters['t_pp1'] + model_parameters['t_pp2'] ) )
     return ans
 
-def coulomb_energy(o1, o2, r12):
+def coulomb_energy(o1, o2, r12, system):
     '''Returns the Coulomb matrix element for a pair of multipoles of type o1 & o2 separated by a system.vector r12.'''
     r12_length = np.linalg.norm(r12)
     if o1 == 's' and o2 == 's':
@@ -117,7 +103,7 @@ def coulomb_energy(o1, o2, r12):
                - 3.0 * np.dot(system.vec[o1], r12) * np.dot(system.vec[o2], r12) / r12_length**5 )
     return ans
 
-def pseudopotential_energy(o, r, model_parameters):
+def pseudopotential_energy(o, r, model_parameters, system):
     '''Returns the energy of a pseudopotential between a multipole of type o and an atom separated by a system.vector r.'''
     ans = model_parameters['v_pseudo']
     r_rescaled = r / model_parameters['r_pseudo']
@@ -127,16 +113,16 @@ def pseudopotential_energy(o, r, model_parameters):
         ans *= -2.0 * np.dot(system.vec[o], r_rescaled)
     return ans
 
-def calculate_energy_ion(atomic_coordinates):
+def calculate_energy_ion(atomic_coordinates, system):
     '''Returns the ionic contribution to the total energy for an input list of atomic coordinates.'''
     energy_ion = 0.0
     for i, r_i in enumerate(atomic_coordinates):
         for j, r_j in enumerate(atomic_coordinates):
             if i < j:
-                energy_ion += (system.ionic_charge**2)*coulomb_energy('s', 's', r_i - r_j)
+                energy_ion += (system.ionic_charge**2)*coulomb_energy('s', 's', r_i - r_j, system)
     return energy_ion
 
-def calculate_potential_vector(atomic_coordinates, model_parameters):
+def calculate_potential_vector(atomic_coordinates, model_parameters, system):
     '''Returns the electron-ion potential energy system.vector for an input list of atomic coordinates.'''
     ndof = len(atomic_coordinates)*system.orbitals_per_atom
     potential_vector = np.zeros(ndof)
@@ -145,11 +131,11 @@ def calculate_potential_vector(atomic_coordinates, model_parameters):
         for atom_i,r_i in enumerate(atomic_coordinates):
             r_pi = atomic_coordinates[system.atom(p)] - r_i
             if atom_i != system.atom(p):
-                potential_vector[p] += ( pseudopotential_energy(system.orb(p), r_pi, system.model_parameters)
-                                         - system.ionic_charge * coulomb_energy(system.orb(p), 's', r_pi) )
+                potential_vector[p] += ( pseudopotential_energy(system.orb(p), r_pi, system.model_parameters, system)
+                                         - system.ionic_charge * coulomb_energy(system.orb(p), 's', r_pi, system) )
     return potential_vector
 
-def calculate_interaction_matrix(atomic_coordinates, model_parameters):
+def calculate_interaction_matrix(atomic_coordinates, model_parameters, system):
     '''Returns the electron-electron interaction energy matrix for an input list of atomic coordinates.'''
     ndof = len(atomic_coordinates)*system.orbitals_per_atom
     interaction_matrix = np.zeros( (ndof,ndof) )
@@ -157,17 +143,14 @@ def calculate_interaction_matrix(atomic_coordinates, model_parameters):
         for q in range(ndof):
             if system.atom(p) != system.atom(q):
                 r_pq = atomic_coordinates[system.atom(p)] - atomic_coordinates[system.atom(q)]
-                interaction_matrix[p,q] = coulomb_energy(system.orb(p), system.orb(q), r_pq)
+                interaction_matrix[p,q] = coulomb_energy(system.orb(p), system.orb(q), r_pq, system)
             if p == q and system.orb(p) == 's':
                 interaction_matrix[p,q] = system.model_parameters['coulomb_s']
             if p == q and system.orb(p) in system.p_orbitals:
                 interaction_matrix[p,q] = system.model_parameters['coulomb_p']
     return interaction_matrix
 
-<<<<<<< HEAD
-=======
 
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
 
 def chi_on_atom(o1, o2, o3, model_parameters):
     '''Returns the value of the chi tensor for 3 orbital indices on the same atom.'''
@@ -179,7 +162,7 @@ def chi_on_atom(o1, o2, o3, model_parameters):
         return model_parameters['dipole']
     return 0.0
 
-def calculate_chi_tensor(atomic_coordinates, model_parameters):
+def calculate_chi_tensor(atomic_coordinates, model_parameters, system):
     '''Returns the chi tensor for an input list of atomic coordinates'''
     ndof = len(atomic_coordinates)*system.orbitals_per_atom
     chi_tensor = np.zeros( (ndof,ndof,ndof) )
@@ -191,22 +174,18 @@ def calculate_chi_tensor(atomic_coordinates, model_parameters):
                 chi_tensor[p,q,r] = chi_on_atom(system.orb(p), system.orb(q), system.orb(r), system.model_parameters)
     return chi_tensor
 
-<<<<<<< HEAD
-#print('chi =\n',chi_tensor)
-=======
  #print('chi =\n',chi_tensor)
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
 
-def calculate_hamiltonian_matrix(atomic_coordinates, model_parameters):
+def calculate_hamiltonian_matrix(atomic_coordinates, model_parameters, system):
     '''Returns the 1-body Hamiltonian matrix for an input list of atomic coordinates.'''
     ndof = len(atomic_coordinates)*system.orbitals_per_atom
     hamiltonian_matrix = np.zeros( (ndof,ndof) )
-    potential_vector = calculate_potential_vector(atomic_coordinates, system.model_parameters)
+    potential_vector = calculate_potential_vector(atomic_coordinates, system.model_parameters, system)
     for p in range(ndof):
         for q in range(ndof):
             if system.atom(p) != system.atom(q):
                 r_pq = atomic_coordinates[system.atom(p)] - atomic_coordinates[system.atom(q)]
-                hamiltonian_matrix[p,q] = hopping_energy(system.orb(p), system.orb(q), r_pq, system.model_parameters)
+                hamiltonian_matrix[p,q] = hopping_energy(system.orb(p), system.orb(q), r_pq, system.model_parameters, system)
             if system.atom(p) == system.atom(q):
                 if p == q and system.orb(p) == 's':
                     hamiltonian_matrix[p,q] += system.model_parameters['energy_s']
@@ -218,7 +197,7 @@ def calculate_hamiltonian_matrix(atomic_coordinates, model_parameters):
                                                  * potential_vector[r] )
     return hamiltonian_matrix
 
-def calculate_atomic_density_matrix(atomic_coordinates):
+def calculate_atomic_density_matrix(atomic_coordinates, system):
     '''Returns a trial 1-electron density matrix for an input list of atomic coordinates.'''
     ndof = len(atomic_coordinates)*system.orbitals_per_atom
     density_matrix = np.zeros( (ndof,ndof) )
@@ -226,29 +205,14 @@ def calculate_atomic_density_matrix(atomic_coordinates):
         density_matrix[p,p] = system.orbital_occupations[system.orb(p)]
     return density_matrix
 
-<<<<<<< HEAD
-class Hartree_Fock():
-=======
 
 class Hartree_Fock:
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
     def __init__(self, hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor):
         self.hamiltonian_matrix = hamiltonian_matrix
         self.interaction_matrix = interaction_matrix
         self.chi_tensor = chi_tensor
         self.fock_matrix = self.calculate_fock_matrix(density_matrix)
-        self.density_matrix = self.calculate_density_matrix(self.fock_matrix)
-<<<<<<< HEAD
-        self.conv_density_matrix, self.conv_fock_matrix = self.scf_cycle(scf_params[0], scf_params[1], scf_params[2])
-        self.energy_scf = self.calculate_energy_scf()
-       # self.ionic_charge = system.ionic_charge
-       # self.orbitals_per_atom = system.orbitals_per_atom
-    def calculate_fock_matrix(self, density_matrix):
-        '''Returns the Fock matrix defined by the input Hamiltonian, interaction, & density matrices.
-
- self.fock_matrix = self.calculate_fock_matrix(density_matrix)
-        self.density_matrix = self.calculate_density_matrix(self.fock_matrix)        Parameters
-=======
+        self.density_matrix = self.calculate_density_matrix(self.fock_matrix, system)
         self.conv_density_matrix, self.conv_fock_matrix = self.scf_cycle(*scf_params) 
         self.energy_scf = self.calculate_energy_scf()
 
@@ -256,7 +220,6 @@ class Hartree_Fock:
         '''Returns the Fock matrix defined by the input Hamiltonian, interaction, & density matrices.
 
         Parameters
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
         ----------
         hamiltonian_matrix : numpy.array
             A 2D array of 1-body Hamiltonian matrix elements.
@@ -287,7 +250,7 @@ class Hartree_Fock:
                                  optimize=True)
         return fock_matrix
 
-    def calculate_density_matrix(self, fock_matrix):
+    def calculate_density_matrix(self, fock_matrix, system):
         '''Returns the 1-electron density matrix defined by the input Fock matrix.
 
            Parameters
@@ -338,7 +301,7 @@ class Hartree_Fock:
         old_density_matrix = self.density_matrix.copy()
         for iteration in range(max_scf_iterations):
             new_fock_matrix = self.calculate_fock_matrix(old_density_matrix)
-            new_density_matrix = self.calculate_density_matrix(new_fock_matrix)
+            new_density_matrix = self.calculate_density_matrix(new_fock_matrix, system)
 
             error_norm = np.linalg.norm( old_density_matrix - new_density_matrix )
             if error_norm < convergence_tolerance:
@@ -366,28 +329,11 @@ class Hartree_Fock:
            energy_scf : float
                This is the energy of the ground state of the atoms from the SCF calcuation. It is ouput as a float.
         '''
-<<<<<<< HEAD
-=======
         #self.density_matrix, self.fock_matrix = self.scf_cycle(*scf_params)
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
         print("Density matrix and Fock matrix calculated.")
         energy_scf = np.einsum('pq,pq', self.hamiltonian_matrix + self.conv_fock_matrix, self.conv_density_matrix)
         return energy_scf
 
-<<<<<<< HEAD
-class MP2(Hartree_Fock):
-	def __init__(self, ionic_charge, fock_matrix, chi_tensor, interaction_matrix, atomic_coordinate, energy_scf, energy_ion):
-		super().__init__(ionic_charge, fock_matrix, chi_tensor, interaction_matrix, atomic_coordinates, energy_scf, energy_ion)
-		self.occupied_energy, self.virtual_energy, self.occupied_matrix, self.virtual_matrix = self.partition_orbitals()
-		self.interaction_tensor = self.transform_interaction_tensor()
-		self.mp2_energy = self.calculate_energy_mp2()
-		self.total_energy = self.calculate_total_energy()
-		num_occ = ((self.ionic_charge // 2) * np.size(self.fock_matrix, 0) // self.orbitals_per_atom)
-
-	def partition_orbitals(self):
-	    """Returns a list with the occupied/virtual energies & orbitals defined by the input Fock matrix.
-	    Parameters
-=======
 
 class MP2():
     def __init__(self, energy_ion, atomic_coordinates):
@@ -404,7 +350,6 @@ class MP2():
     def partition_orbitals(self):
         """Returns a list with the occupied/virtual energies & orbitals defined by the input Fock matrix.
 	Parameters
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
     	----------
     	fock_matrix : numpy.ndarray
         	A (ndof,ndof) array populated with 'float' data types. The elements of this matrix are constructed by
@@ -424,69 +369,6 @@ class MP2():
     	virtual_matrix : numpy.ndarray
         	A rank 2 array, [:, num_occ:], indexed by the number of virtual orbitals and by the
         	number of basis functions/molecular orbitals. The stored values are 'floats'.
-<<<<<<< HEAD
-    	"""
-		orbital_energy, orbital_matrix = np.linalg.eigh(self.fock_matrix)
-		occupied_energy = orbital_energy[:self.num_occ]
-		virtual_energy = orbital_energy[self.num_occ:]
-		occupied_matrix = orbital_matrix[:, :self.num_occ]
-		virtual_matrix = orbital_matrix[:, self.num_occ:]
-
-		return occupied_energy, virtual_energy, occupied_matrix, virtual_matrix
-
-	def transform_interaction_tensor(self):
-		"""Returns a transformed V tensor defined by the input occupied, virtual, & interaction matrices.
-        Parameters
-        ----------
-        occupied_matrix : numpy.ndarray
-            A rank 2 array, [:, :num_occ], indexed by the number of basis functions/orbitals
-            and the number of occupied orbitals. The stored values are 'floats'.
-        virtual_matrix : numpy.ndarray
-            A rank 2 array, [:, num_occ:], indexed by the number of virtual orbitals and by the
-            number of basis functions/orbitals. The stored values are 'floats'.
-        interaction_matrix : numpy.ndarray
-            A (ndof,ndof) array populated with 'float' data types. The elements of this matrix are
-            constructed by numerically computing an expectation value for the pairwise coulomic interactions
-            between electrons in orbitals {p} and {q}.
-        chi_tensor : numpy.ndarray
-            A rank 3 array, [ndof,ndof,ndof], indexed by {p} and {q} atomic orbitals and
-            r--the multipole moment index. The stored values are 'floats'.
-        Returns
-        -------
-        interaction_tensor : numpy.ndarray
-            A rank 4 interaction tensor represented by an einstein sum over {p} and {q} is contracted to
-            4 indices: aibj. These particle-hole or O-V indices define the basis featured in the second
-            order Moller-Plesset perturbation energy expression.
-        """
-		chi2_tensor = np.einsum('qa,ri,qrp', self.virtual_matrix, self.occupied_matrix, self.chi_tensor, optimize=True)
-		interaction_tensor = np.einsum('aip,pq,bjq->aibj', chi2_tensor, self.interaction_matrix, chi2_tensor, optimize=True)
-		return interaction_tensor
-
-	def calculate_energy_mp2(self):
-		"""Returns the MP2 contribution to the total energy defined by the input Fock & interaction matrices.
-        Parameters
-        ----------
-        fock_matrix : numpy.ndarray
-            A (ndof,ndof) array populated with 'float' data types. The elements of this matrix are constructed by
-            numerically computing an expectation value for the fock operator operating on a state vector.
-            The transformed state is then projected onto an orbital basis.
-        interaction_matrix : numpy.ndarray
-            A (ndof,ndof) array populated with 'float' data types. The elements of this matrix are
-            constructed by numerically computing an expectation value for the pairwise coulomic interactions
-            between electrons in orbitals {p} and {q}.
-        chi_tensor : numpy.ndarray
-            A rank 3 array, [ndof,ndof,ndof], indexed by {p} and {q} atomic orbitals and
-            r--the multipole moment index. The stored values are 'floats'.
-        Returns
-        -------
-        energy_mp2 : numpy.float64
-            The MP2 energy is a scalar that represents the sum of the HF energy and the energy correction
-            computed using second order Moller-Plesset perturbation thoery.
-        """
-		num_virt = (len(self.atomic_coordinates) * self.orbitals_per_atom) - self.num_occ
-
-		energy_mp2 = 0.0
-=======
         """
         num_occ = ((system.ionic_charge // 2) * np.size(self.conv_fock_matrix, 0) // system.orbitals_per_atom)
         orbital_energy, orbital_matrix = np.linalg.eigh(self.conv_fock_matrix)
@@ -507,7 +389,6 @@ class MP2():
         num_occ =  ((system.ionic_charge // 2) * np.size(self.conv_fock_matrix, 0) // system.orbitals_per_atom)
         num_virt = (len(self.atomic_coordinates) * system.orbitals_per_atom) - num_occ
         energy_mp2 = 0.0
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
         num_occ = len(self.occupied_energy)
         num_virt = len(self.virtual_energy)
         for a in range(num_virt):
@@ -515,31 +396,6 @@ class MP2():
                 for i in range(num_occ):
                     for j in range(num_occ):
                         energy_mp2 -= ((2.0 * self.interaction_tensor[a, i, b, j]**2 - self.interaction_tensor[a, i, b, j] * 
-<<<<<<< HEAD
-										self.interaction_tensor[a, j, b, i]) / (self.vitual_energy[a] + self.vitual_energy[b] - 
-										self.occupied_enery[i] - self.occupied_energy[j]))
-        return energy_mp2
-
-	def calculate_total_energy(self):
-		"""Returns the total energy of the calculation, Hartree-Fock + Ion + Second order energy correction
-		Parameters
-		----------
-		energy_scf: float
-		energy_ion: float
-		energy_mp2: float
-
-		Returns
-		-------
-		total_energy: float
-
-		"""
-		total_energy = self.energy_scf + self.energy.ion + self.energy_mp2
-		return total_energy
-#system = Noble_Gas_model ()
-
-if __name__ == "__main__":
-
-=======
 					self.interaction_tensor[a, j, b, i]) / (self.virtual_energy[a] + self.virtual_energy[b] - 
 					self.occupied_energy[i] - self.occupied_energy[j]))
         return energy_mp2
@@ -552,7 +408,6 @@ if __name__ == "__main__":
 
                                                                    
 if __name__ == "__main__":
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
     scf_params = []
     try:
         scf_params.append(int(input("Maximum number of scf iterations (default = 100):\n")))
@@ -567,26 +422,17 @@ if __name__ == "__main__":
     except:
         pass
 
-<<<<<<< HEAD
-    atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
-    print(system.model_parameters)
-    density_matrix = calculate_atomic_density_matrix(atomic_coordinates)
-    hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, system.model_parameters)
-    interaction_matrix = calculate_interaction_matrix(atomic_coordinates, system.model_parameters)
-    chi_tensor = calculate_chi_tensor(atomic_coordinates, system.model_parameters)
-    Calc =  Hartree_Fock(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
-    print(Calc.energy_scf)	
-=======
     #Nobel_Gas_model.gas_name = 'argon'
-    system = Nobel_Gas_model()
-    interaction_matrix = calculate_interaction_matrix(atomic_coordinates, system.model_parameters)
-    chi_tensor = calculate_chi_tensor(atomic_coordinates, system.model_parameters)
-    hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, system.model_parameters)
-    density_matrix = calculate_atomic_density_matrix(atomic_coordinates)
-    energy_ion = calculate_energy_ion(atomic_coordinates)
+    system = Nobel_Gas_model(sys.argv[1])
+    interaction_matrix = calculate_interaction_matrix(atomic_coordinates, system.model_parameters, system)
+    chi_tensor = calculate_chi_tensor(atomic_coordinates, system.model_parameters, system)
+    hamiltonian_matrix = calculate_hamiltonian_matrix(atomic_coordinates, system.model_parameters, system)
+    density_matrix = calculate_atomic_density_matrix(atomic_coordinates, system)
+    energy_ion = calculate_energy_ion(atomic_coordinates, system)
     calc = Hartree_Fock(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
-    print(calc.energy_scf) 
+    print('SCF energy: ',calc.energy_scf)
+    print('Total Energy before MP2 correction: ', calc.energy_scf + energy_ion)
     mp2 = MP2(energy_ion, atomic_coordinates)
-    print(mp2.mp2_energy)
+    print('MP2 second order correction: ',mp2.mp2_energy)
+    print('Total Energy after MP2 correction: ', mp2.total_energy)
 #    universe.py(str(sys.argv[2]))
->>>>>>> cd3067802e107b845e94721b7abc73f2109c30cc
