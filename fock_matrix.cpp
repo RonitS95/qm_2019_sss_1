@@ -1,9 +1,7 @@
-#include <iostream>
 #include <vector>
 #include <Eigen/Dense>
-#include <algorithm>
 
-using std::cout; using std::endl; using std::vector; using std::string;
+using std::vector; using std::string;
 
 typedef Eigen::MatrixXd matrix;
 
@@ -15,31 +13,6 @@ int atom(int ao_index, int orbitals_per_atom)
 int orb_index(int ao_index, int orbitals_per_atom)
 {
     return ao_index % orbitals_per_atom;
-}
-
-int ao_index(int atom_p, string orb_p, vector<string> orbitals, int orbitals_per_atom)
-{
-    int p = atom_p * orbitals_per_atom;
-    vector<string>::iterator itr = std::find(orbitals.begin(), orbitals.end(), orb_p);
-    int dist;
-    dist = std::distance(orbitals.begin(), itr);
-    p = p + dist;
-
-    return p;
-}
-
-template <typename T, typename U>
-bool in_vector(U elem, const vector<T>& vec)
-{
-    return (std::find(vec.begin(), vec.end(), elem) != vec.end()) ? true : false;
-}
-
-template <typename T>
-vector<T> slice(vector<T>& vec, int i, int f)
-{
-    vector<T> sliced(f - i + 1);
-    std::copy(vec.begin() + i, vec.begin() + f + 1, sliced.begin());
-    return sliced;
 }
 
 float chi_on_atom(int o1, int o2, int o3, double dipole)
@@ -118,11 +91,3 @@ matrix calculate_fock_matrix(matrix hamiltonian_matrix, matrix interaction_matri
     return fock_matrix;
 }
 
-int main()
-{
-    matrix fock_matrix = calculate_fock_matrix(ham_test, int_test, dens_test, orbitals, orbitals_per_atom, dipole);
-
-    cout << fock_matrix << endl;
-
-    return 0;
-}
