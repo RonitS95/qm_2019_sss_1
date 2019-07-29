@@ -787,8 +787,8 @@ if __name__ == "__main__":
 
     calculation = Hartree_Fock(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
     print(calculation.energy_scf)
-    '''
 
+    '''
     # Use density matrix to calculate Fock matrix, then use Fock matrix to calculate new density matrix??
     fock_matrix = calculate_fock_matrix(hamiltonian_matrix, interaction_matrix, density_matrix, chi_tensor)
     density_matrix = calculate_density_matrix(fock_matrix)
