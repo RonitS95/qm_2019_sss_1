@@ -26,7 +26,7 @@ float chi_on_atom(int o1, int o2, int o3, double dipole)
     return 0.0;
 }
 
-matrix calculate_fock_matrix(matrix hamiltonian_matrix, matrix interaction_matrix, matrix density_matrix, vector<string> orbitals, int orbitals_per_atom, double dipole){
+matrix calculate_fock_matrix(matrix hamiltonian_matrix, matrix interaction_matrix, matrix density_matrix, int orbitals_per_atom, double dipole){
     int ndof = hamiltonian_matrix.row(0).size();
     matrix fock_matrix = hamiltonian_matrix;
 
