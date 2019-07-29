@@ -5,6 +5,7 @@ class MP2(Hartree_Fock):
 		self.interaction_tensor = self.transform_interaction_tensor()
 		self.mp2_energy = self.calculate_energy_mp2()
 		self.total_energy = self.calculate_total_energy()
+		num_occ = ((self.ionic_charge // 2) * np.size(self.fock_matrix, 0) // self.orbitals_per_atom)
 
 	def partition_orbitals(self):
 	    """Returns a list with the occupied/virtual energies & orbitals defined by the input Fock matrix.
@@ -29,12 +30,11 @@ class MP2(Hartree_Fock):
         	A rank 2 array, [:, num_occ:], indexed by the number of virtual orbitals and by the
         	number of basis functions/molecular orbitals. The stored values are 'floats'.
     	"""
-		num_occ = ((self.ionic_charge // 2) * np.size(self.fock_matrix, 0) // self.orbitals_per_atom)
 		orbital_energy, orbital_matrix = np.linalg.eigh(self.fock_matrix)
-		occupied_energy = orbital_energy[:num_occ]
-		virtual_energy = orbital_energy[num_occ:]
-		occupied_matrix = orbital_matrix[:, :num_occ]
-		virtual_matrix = orbital_matrix[:, num_occ:]
+		occupied_energy = orbital_energy[:self.num_occ]
+		virtual_energy = orbital_energy[self.num_occ:]
+		occupied_matrix = orbital_matrix[:, :self.num_occ]
+		virtual_matrix = orbital_matrix[:, self.num_occ:]
 
 		return occupied_energy, virtual_energy, occupied_matrix, virtual_matrix
 
@@ -87,8 +87,7 @@ class MP2(Hartree_Fock):
             The MP2 energy is a scalar that represents the sum of the HF energy and the energy correction
             computed using second order Moller-Plesset perturbation thoery.
         """
-		num_occ = ((self.ionic_charge // 2) * np.size(self.fock_matrix, 0) // self.orbitals_per_atom)
-		num_virt = (len(self.atomic_coordinates) * self.orbitals_per_atom) - num_occ
+		num_virt = (len(self.atomic_coordinates) * self.orbitals_per_atom) - self.num_occ
 
 		energy_mp2 = 0.0
         num_occ = len(self.occupied_energy)
