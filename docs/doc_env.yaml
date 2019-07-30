@@ -1,0 +1,19 @@
+name: documentation
+channels:
+dependencies:
+    # Base depends
+  - python
+  - pip
+    
+    #Dependencies
+  - numpy
+
+    # Testing
+  - pytest
+  - pytest-cov
+  - codecov
+
+    # Pip-only installs
+  #- pip:
+  #  - codecov
+
