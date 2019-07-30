@@ -11,5 +11,4 @@ List of functions in project
     qm_project_python_testing.calculate_chi_tensor
     qm_project_python_testing.calculate_potential_vector
     qm_project_python_testing.calculate_hamiltonian_matrix
-    qm_project_python_testing.claculate_interaction_matrix
-    qm_project_python_testing.calculate_density_matrix
+
