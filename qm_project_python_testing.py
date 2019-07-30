@@ -24,7 +24,7 @@ import os #may not need if xyz file shares the same directory as the program
 
 #these were provided in the original porject code--should be generalized for any set of coordinates
 atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
-#atomic_coordinates = np.random.random([10,3])
+#atomic_coordinates = 0.000000000001*np.random.random([20,3])
 
 
 class Nobel_Gas_model:
@@ -39,6 +39,10 @@ class Nobel_Gas_model:
         self.orbital_occupations = {'s' : 0, 'px' : 1, 'py' : 1, 'pz' : 1 }
 
     def assign_model_parameters(self):
+        """
+        Function in class Nobel_Gas_model to read in a file containing the model parameters for the nobel gas. The filename mush be of the 
+        format <gas_name>.txt.
+        """
         filename = self.gas_model+'.txt'
         commands = {}
         with open(filename) as fh:
@@ -48,32 +52,62 @@ class Nobel_Gas_model:
         return commands
 
     def orb(self, ao_index):
+        """
+        Function in class Nobel_Gas_model which indexes the orbitals in the system as the modulo of atomic-orbital
+        index with orbitals per atom.
+
+        Parameters
+        ----------
+        ao_index: integer
+            The atomic-orbital index
+
+        Returns
+        _______
+        p : orbital identity
+            Returns which orbital has the index p
+        """
         orb_index = ao_index % self.orbitals_per_atom
         return self.orbital_types[orb_index]
+    
     def atom(self, ao_index):
+        """
+        Function in class Nobel_Gas_model which returns the atomic index given the atomic orbital indes
+
+        Parameters
+        _________
+        ao_index: integer
+            Atomic-orbital index
+
+        Returns
+        _______
+            an integer with the atomic index
+        """
         return ao_index // self.orbitals_per_atom
+    
     def ao_index(self,atom_p, orb_p):
+        """
+        Function in class Nobel_Gas_model which returns the atomic orbital index
+
+        Parameters
+        ----------
+        atom_p: integer
+            Atomic index
+
+        orb_p: string
+            orbital type, i.e., s, px, py, or pz
+
+        Returns
+        -------
+        p : integer
+            Atomic orbital index, which is the sum of atomic index and orbitals per atom added to the specific orbital index
+        """
         p = atom_p * self.orbitals_per_atom
         p += self.orbital_types.index(orb_p)
         return p
 
-# system = Nobel_Gas_model()
-# print(system)
-# print(system.model_parameters)
-
-# for index in range(2*system.orbitals_per_atom):
-#     print('index',index,'atom',system.atom(index),'orbital',system.orb(index))
-#
-# print('index test:')
-# for index in range(2*system.orbitals_per_atom):
-#     atom_p = system.atom(index)
-#     orb_p = system.orb(index)
-#     print(index, system.ao_index(atom_p,orb_p))
-
- #see above
- #atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
 
 def hopping_energy(o1, o2, r12, model_parameters, system):
+
     r12_rescaled = r12 / model_parameters['r_hop']
     r12_length = np.linalg.norm(r12_rescaled)
     ans = np.exp( 1.0 - r12_length**2 )
