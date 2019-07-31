@@ -6,6 +6,7 @@ Unit and regression test for the qm_project_python_testing package.
 import qm_project_python_testing as qm
 import pytest
 import sys
+import numpy as np
 
 def test_qm_project_python_testing_imported():
     """Sample test, will always pass so long as import statement worked"""
