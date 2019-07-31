@@ -11,7 +11,7 @@ def test_qm_project_python_testing_imported():
     """Sample test, will always pass so long as import statement worked"""
     assert "qm_project_python_testing" in sys.modules
 
-refer to the original jupyter notebook for outputs
+#refer to the original jupyter notebook for outputs
 
 #define system w/o file call
 system = qm.Nobel_Gas_model('argon')
