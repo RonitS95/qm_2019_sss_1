@@ -303,7 +303,7 @@ def calculate_interaction_matrix(atomic_coordinates, model_parameters, system):
 
 
 
-def chi_on_atom(o1, o2, o3, model_parameters):
+def chi_on_atom(o1, o2, o3, model_parameters, system):
     '''Returns the value of the chi tensor for 3 orbital indices on the same atom.
     
     Parameters
@@ -356,7 +356,7 @@ def calculate_chi_tensor(atomic_coordinates, model_parameters, system):
             q = system.ao_index(system.atom(p), orb_q) # p & q on same atom
             for orb_r in system.orbital_types:
                 r = system.ao_index(system.atom(p), orb_r) # p & r on same atom
-                chi_tensor[p,q,r] = chi_on_atom(system.orb(p), system.orb(q), system.orb(r), system.model_parameters)
+                chi_tensor[p,q,r] = chi_on_atom(system.orb(p), system.orb(q), system.orb(r), system.model_parameters, system)
     return chi_tensor
 
  #print('chi =\n',chi_tensor)
@@ -397,7 +397,7 @@ def calculate_hamiltonian_matrix(atomic_coordinates, model_parameters, system):
                     hamiltonian_matrix[p,q] += system.model_parameters['energy_p']
                 for orb_r in system.orbital_types:
                     r = system.ao_index(system.atom(p), orb_r)
-                    hamiltonian_matrix[p,q] += ( chi_on_atom(system.orb(p), system.orb(q), orb_r, system.model_parameters)
+                    hamiltonian_matrix[p,q] += ( chi_on_atom(system.orb(p), system.orb(q), orb_r, system.model_parameters, system)
                                                  * potential_vector[r] )
     return hamiltonian_matrix
 
