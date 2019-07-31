@@ -14,7 +14,7 @@ def test_qm_project_python_testing_imported():
 #refer to the original jupyter notebook for outputs
 
 #define system w/o file call
-system = qm.Nobel_Gas_model('argon')
+system = qm.Nobel_Gas_model('/Users/ronit/MolSSI/qm_2019_sss_1/qm_project_python_testing/argon')
 #define coordinates w/o file call
 atomic_coordinates = np.array([ [0.0,0.0,0.0], [3.0,4.0,5.0] ])
 
