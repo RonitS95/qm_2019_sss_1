@@ -42,7 +42,7 @@ install:
 
 
 script:
-  - pytest -v --cov=qm_project_python_testing ./tests/
+  - pytest -v --cov=qm_project_python_testing qm_project_python_testing/tests/
 
 notifications:
     email: false
