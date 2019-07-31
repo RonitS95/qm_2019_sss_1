@@ -7,11 +7,11 @@ Welcome to qm_sss_2019_group_1 documentation!
 =========================================================
 
 This module has the method discussed by Dr. Jonathan Moussa in the MolSSI 2019 Summer School QM Project. In short, this 
-method is a semiempirical model which runs Hartree FOck calculations and MP2 corrections on a system of Nobel Gases. 
+method is a semiempirical model which runs Hartree Fock calculations and MP2 corrections on a system of Nobel Gases. 
 While this is not true in the most strictest sense, this model gives remotely acceptable results for a specific type of
 system, and Nobel Gases fit them. 
 
-Here, we are discussing the resutls for Argon, but if you have the relevant data, you can run it for your model too. 
+Here, we are discussing the results for Argon, but if you have the relevant data, you can run it for your model too. 
 
 
 .. toctree::
@@ -28,3 +28,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Link to `Semiempirical methods https://www.cup.uni-muenchen.de/ch/compchem/energy/semi1.html`
