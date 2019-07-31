@@ -29,4 +29,4 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-Link to `Semiempirical methods https://www.cup.uni-muenchen.de/ch/compchem/energy/semi1.html`_
+Link to `Semiempirical methods <https://www.cup.uni-muenchen.de/ch/compchem/energy/semi1.html>`_
